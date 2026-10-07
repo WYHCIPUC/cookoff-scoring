@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>「吃喝大王」厨艺比赛 · 评委品鉴系统</title>
+<style>
+:root{
+  --paper:#f6efe2; --card:#fffdf7; --ink:#3d3226; --ink2:#95836d;
+  --red:#c9402e; --red-deep:#a53222; --gold:#b8862f; --gold-bg:#f4e7c8;
+  --green:#6f9463; --green-bg:#e7eedf;
+  --line:#e6d8c0;
+  --ink-shadow:3px 3px 0 rgba(61,50,38,.16);
+  --serif:"Songti SC","STSong","SimSun","Noto Serif SC",serif;
+  --disp:"Yuanti SC","YouYuan","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+body{
+  font-family:var(--disp);color:var(--ink);background:var(--paper);
+  background-image:
+    radial-gradient(900px 420px at 50% -10%, rgba(184,134,47,.08), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .36 0 0 0 0 .25 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  min-height:100vh;line-height:1.6;
+}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 60px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 顶部红幡 */
+.hero{
+  background:linear-gradient(180deg,#c9402e,#d95a42);
+  color:#fff;padding:64px 24px 88px;text-align:center;position:relative;overflow:hidden;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 46px),50% 100%,0 calc(100% - 46px));
+}
+.hero::before,.hero::after{
+  content:"";position:absolute;opacity:.14;width:120px;height:120px;background-repeat:no-repeat;pointer-events:none;
+}
+.hero::before{left:-16px;top:24%;transform:rotate(-12deg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M30 78c-8-6-12-16-9-26 4-13 18-21 32-19 3-8 13-11 19-5 5 5 4 12 0 16 7 3 11 10 11 17 0 12-11 22-25 22-10 0-21-1-28-5z'/%3E%3C/svg%3E");}
+.hero::after{right:-14px;top:18%;transform:rotate(14deg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M22 58l16 4-3 8c-2 6 3 12 9 11l10-2M38 62l6-14c2-5 8-7 12-4l10 7M56 44l8-18M64 40l10-16'/%3E%3C/svg%3E");}
+.kicker{font-size:13px;letter-spacing:.3em;color:#f4e7c8;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:18px}
+.kicker svg{width:18px;height:18px}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(30px,6.4vw,46px);letter-spacing:.1em;text-shadow:2px 2px 0 rgba(0,0,0,.12)}
+.crown{width:52px;height:52px;margin:6px auto 2px;display:block}
+.sub{margin-top:16px;font-size:15px;color:rgba(255,248,235,.94)}
+.date{margin-top:10px;font-size:13.5px;color:rgba(255,248,235,.8);letter-spacing:.15em}
+
+/* 印章 */
+.stamp{
+  position:absolute;right:26px;top:30px;width:74px;height:74px;color:#fdf6ea;
+  display:flex;align-items:center;justify-content:center;transform:rotate(9deg);
+}
+.stamp svg{position:absolute;inset:0;width:100%;height:100%}
+.stamp span{font-family:var(--serif);font-weight:700;font-size:15px;letter-spacing:.1em}
+
+/* 主内容上提 */
+.main{margin-top:-52px;position:relative;z-index:2}
+
+/* 通用卡 */
+.card{
+  background:var(--card);border:2px solid var(--ink);border-radius:20px;
+  box-shadow:var(--ink-shadow);padding:26px 24px;margin-bottom:22px;
+}
+
+/* 流程四步 */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.step{text-align:center;padding:8px 4px}
+.step .ic{width:58px;height:58px;margin:0 auto 10px;border-radius:50%;border:2.5px solid var(--red);color:var(--red);display:flex;align-items:center;justify-content:center;background:#fff}
+.step .ic svg{width:30px;height:30px}
+.step b{font-family:var(--serif);font-size:17px;display:block}
+.step p{font-size:13px;color:var(--ink2);margin-top:5px;line-height:1.5}
+
+/* 特性列表 */
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.feat{display:flex;gap:11px;align-items:flex-start;background:#fbf6ea;border:1.5px dashed var(--line);border-radius:14px;padding:14px}
+.feat .fi{flex:none;width:40px;height:40px;border-radius:11px;border:2px solid var(--ink);color:var(--ink);display:flex;align-items:center;justify-content:center;background:#fff;font-family:var(--serif);font-weight:800;box-shadow:2px 2px 0 rgba(61,50,38,.14)}
+.feat .fi svg{width:22px;height:22px}
+.feat b{font-size:14.5px;display:block}
+.feat p{font-size:12.5px;color:var(--ink2);margin-top:2px}
+
+/* 标题 */
+.sec{font-family:var(--serif);font-size:22px;font-weight:900;letter-spacing:.06em;text-align:center;margin:34px 0 18px;position:relative}
+.sec::after{content:"";display:block;width:56px;height:4px;margin:10px auto 0;border-radius:99px;background:repeating-linear-gradient(90deg,var(--gold) 0 8px,transparent 8px 13px,var(--red) 13px 21px,transparent 21px 26px)}
+
+/* 规则卡 */
+.rule{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.rule:last-child{border-bottom:none}
+.rule .rn{flex:none;width:44px;height:44px;border-radius:50%;border:2px dashed var(--red);color:var(--red);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:900;font-size:15px;transform:rotate(-4deg);background:rgba(201,64,46,.04)}
+.rule b{font-size:15px}
+.rule p{font-size:13px;color:var(--ink2)}
+
+/* 二维码区 */
+.qr-wrap{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:center}
+@media (max-width:560px){.qr-wrap{grid-template-columns:1fr}}
+.qr-card{background:#fff;border:2.5px solid var(--gold);border-radius:20px;padding:22px;text-align:center}
+.qr-card img{width:100%;max-width:230px;border-radius:12px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:50px;padding:12px 28px;border-radius:14px;border:2px solid var(--ink);
+  background:var(--card);color:var(--ink);font-size:15px;font-weight:700;font-family:var(--disp);
+  box-shadow:var(--ink-shadow);text-decoration:none;transition:transform .12s ease,box-shadow .12s ease;cursor:pointer;
+}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(61,50,38,.16)}
+.btn.primary{background:var(--red);border-color:var(--red-deep);color:#fdf6ea;font-family:var(--serif);letter-spacing:.1em;box-shadow:3px 3px 0 var(--red-deep)}
+.btn.ghost{background:transparent;border-style:dashed}
+.btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+
+/* 底部 */
+footer{margin-top:44px;text-align:center;font-size:12.5px;color:var(--ink2)}
+footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertical-align:middle;margin-bottom:8px;transform:rotate(-6deg)}
+@media print{.btns,.hero::before,.hero::after{display:none}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="stamp"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="24" cy="24" r="20" stroke-dasharray="3 4"/><circle cx="24" cy="24" r="15.5"/></svg><span>品鉴</span></div>
+  <div class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 3l3 18M13 3l-1 18"/><path d="M7.5 8l5-1"/></svg>开饭啦 · 干饭人集合</div>
+  <svg class="crown" viewBox="0 0 24 24" fill="none" stroke="#f4e7c8" stroke-width="1.6" stroke-linejoin="round"><path d="M4 18h16l-1-9-5 4-4-7-4 7-5-4z"/></svg>
+  <h1>「吃喝大王」厨艺比赛</h1>
+  <div class="sub">评委品鉴打分系统 · 手机扫码即用 · 无需安装</div>
+  <div class="date">2026.10.11 · 珠江星火1926 三楼</div>
+</div>
+
+<div class="wrap">
+<div class="main">
+
+  <div class="card">
+    <div class="steps">
+      <div class="step">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div>
+        <b>① 扫码进入</b><p>微信群扫二维码<br>浏览器直接打开</p>
+      </div>
+      <div class="step">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5"/><circle cx="12" cy="15" r="3"/></svg></div>
+        <b>② 选我的组</b><p>7 组真实名单<br>本组菜品自动回避</p>
+      </div>
+      <div class="step">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.5 1.5-1.5 1.5-3M13 8c0-1.5 1.5-1.5 1.5-3"/></svg></div>
+        <b>③ 色·香·味打分</b><p>每菜 1–10 分<br>提交后自动下一道</p>
+      </div>
+      <div class="step">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 18h16l-1-9-5 4-4-7-4 7-5-4z"/></svg></div>
+        <b>④ 揭晓大王</b><p>逐组揭晓彩带雨<br>生成海报发群里</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">为什么用它</div>
+  <div class="card">
+    <div class="feats">
+      <div class="feat">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v18M5 8l7-5 7 5"/><circle cx="12" cy="15" r="3"/></svg></div>
+        <div><b>手机即用零安装</b><p>扫码打开浏览器就行，户外流量可用，不需要电脑</p></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.6-3.5 2.8-5.5 5.5-5.5s4.9 2 5.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M14.8 14.8c2.4.2 4.6 1.9 5.2 5.2"/></svg></div>
+        <div><b>多人实时共享</b><p>评委同时打分互不冲突，主持人后台 6 秒刷新全场</p></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg></div>
+        <div><b>匿名公平</b><p>本组回避、去最高最低分、榜单只显示"评委 1/2/3"</p></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9l8-5 8 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M9 21v-6h6v6"/></svg></div>
+        <div><b>照片上云端</b><p>精彩瞬间随手拍，赛后一键整理成照片合集</p></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 18h16l-1-9-5 4-4-7-4 7-5-4z"/></svg></div>
+        <div><b>卡通结果海报</b><p>皇冠大卡 + 全部菜品照 + 前三榜单，长按就保存</p></div>
+      </div>
+      <div class="feat">
+        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div><b>主持人全掌控</b><p>开火/收锅一键控制，交卷状态点名催卷</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">比赛规则</div>
+  <div class="card">
+    <div class="rule"><div class="rn">组</div><div><b>8 组 × 2 人，各出 2 道菜</b><p>菜单赛前保密，组间互评、本组回避</p></div></div>
+    <div class="rule"><div class="rn">评</div><div><b>每组推举 1 位评委</b><p>匿名打分，色 30% · 香 30% · 味 40%，每项 1–10 分</p></div></div>
+    <div class="rule"><div class="rn">均</div><div><b>自动去极值</b><p>每道菜去掉一个最高分和一个最低分再平均</p></div></div>
+    <div class="rule"><div class="rn">王</div><div><b>小组总分 = 两道菜之和</b><p>满分 20，最高者荣膺「吃喝大王」称号 👑</p></div></div>
+  </div>
+
+  <div class="sec">扫码上桌</div>
+  <div class="card">
+    <div class="qr-wrap">
+      <div class="qr-card">
+        <img src="qr.png" alt="活动二维码" onerror="this.style.display='none';document.getElementById('qrFall').style.display='block'">
+        <div id="qrFall" style="display:none;font-size:13px;color:var(--ink2);padding:12px 0">二维码图片未加载<br>请直接点击右侧按钮进入</div>
+        <div style="font-size:13px;color:var(--ink2);margin-top:10px">微信扫一扫 · 长按识别均可</div>
+      </div>
+      <div>
+        <div style="font-family:var(--serif);font-size:18px;font-weight:800;margin-bottom:6px">现在就进去看看</div>
+        <p style="font-size:13.5px;color:var(--ink2);line-height:1.7">演示数据已就位：7 组队伍、14 道菜、84 份评分，<br>可以完整体验打分 → 揭晓 → 海报全流程。</p>
+        <div class="btns" style="justify-content:flex-start">
+          <a class="btn primary" href="https://cooktool2026-d7gyuz92r0462a11c-1259386436.tcloudbaseapp.com/" target="_blank" rel="noopener">进入打分系统</a>
+          <a class="btn ghost" href="https://github.com/WYHCIPUC/cookoff-scoring" target="_blank" rel="noopener">GitHub 仓库</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="seal2"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="24" cy="24" r="20" stroke-dasharray="3 4"/><circle cx="24" cy="24" r="15.5"/></svg></div>
+    <div>用心吃饭 · 用力生活</div>
+    <div style="margin-top:4px">「吃喝大王」厨艺比赛 · 评委品鉴系统</div>
+  </footer>
+
+</div>
+</div>
+
+</body>
+</html>
