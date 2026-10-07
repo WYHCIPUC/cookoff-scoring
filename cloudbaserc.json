@@ -1,0 +1,11 @@
+{
+  "envId": "cooktool2026-d7gyuz92r0462a11c",
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "app": {
+    "serviceName": "厨艺大赛评委打分工具",
+    "framework": "static",
+    "installCommand": "",
+    "buildCommand": "",
+    "outputDir": "./dist"
+  }
+}
