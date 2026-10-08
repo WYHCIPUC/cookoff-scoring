@@ -62,8 +62,9 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
   background:linear-gradient(180deg,rgba(244,234,216,.97),rgba(244,234,216,.9) 80%,transparent);
 }
 .banner .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:5px;vertical-align:1px}
-.banner.demo{color:#8c6a1f}
-.banner.demo .dot{background:#c9a227}
+.banner.demo{background:transparent;padding-left:0;padding-right:0;letter-spacing:.05em}
+.banner.demo .tag{display:inline-flex;align-items:center;background:rgba(244,234,216,.96);border:1px dashed #c9a227;border-radius:999px;padding:3px 14px;font-size:.72rem;color:#8c6a1f;box-shadow:0 1px 6px rgba(61,50,38,.08)}
+.banner.demo .dot{background:#c9a227;margin-right:5px}
 .banner.err{color:var(--red2)}
 .banner.err .dot{background:var(--red)}
 
@@ -116,7 +117,7 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
 .main-entry .t{font-size:1.25rem}
 .main-entry .seal{width:54px;height:54px;font-size:1.2rem}
 .mini-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
-.mini{background:var(--card);border:1.5px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px 6px 12px;text-align:center;cursor:pointer;transition:transform .18s cubic-bezier(.34,1.56,.64,1);animation:fadeUp .5s cubic-bezier(.34,1.56,.64,1) both .1s}
+.mini{background:var(--card);border:1.5px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px 6px 12px;text-align:center;cursor:pointer;transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
 .mini:active{transform:scale(.94)}
 .mini .mi{display:flex;width:40px;height:40px;margin:0 auto 6px;border-radius:13px;border:2px solid var(--ink);color:var(--ink);background:var(--card);align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:1rem;transform:rotate(-4deg);box-shadow:2px 2px 0 rgba(61,50,38,.14)}
 .mini .mi2{color:var(--red);border-color:var(--red-deep)}
@@ -134,7 +135,7 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
 .entry .t{font-family:var(--serif);font-size:1.15rem;font-weight:700;letter-spacing:.03em}
 .entry .d{font-size:.78rem;color:var(--ink2);margin-top:2px}
 .entry .arrow{margin-left:auto;color:var(--gold);font-size:1.3rem;font-weight:700}
-.entry:nth-child(2){animation-delay:.08s}.entry:nth-child(3){animation-delay:.16s}.entry:nth-child(4){animation-delay:.24s}
+
 
 /* ---------- 印章 → 贴纸 ---------- */
 .seal{
@@ -160,7 +161,7 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
   width:38px;height:38px;border-radius:14px;border:1.5px solid var(--line);background:var(--card);
   font-size:1.1rem;color:var(--ink);flex:none;box-shadow:0 2px 0 rgba(200,150,90,.15);
 }
-.topbar .tt{font-family:var(--serif);font-size:1.08rem;font-weight:700;letter-spacing:.05em}
+.topbar .tt{font-family:var(--serif);font-size:1.08rem;font-weight:700;letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .topbar .tr{margin-left:auto;font-size:.75rem;color:var(--ink2)}
 
 /* ---------- 通用组件 ---------- */
@@ -172,7 +173,7 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
 .hint{font-size:.8rem;color:var(--ink2);margin:2px 2px 14px}
 .card{
   background:var(--card);border:1.5px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
-  padding:16px;margin-bottom:14px;animation:fadeUp .5s cubic-bezier(.34,1.56,.64,1) both;position:relative;overflow:hidden;
+  padding:16px;margin-bottom:14px;position:relative;overflow:hidden;
 }
 .card.plain{animation:none}
 .card .corner{position:absolute;left:0;top:0;width:5px;height:100%;background:linear-gradient(180deg,var(--gold),var(--red));border-radius:0 4px 4px 0}
@@ -268,7 +269,7 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
 textarea.in{min-height:74px;resize:vertical}
 .in{
   width:100%;border:1.5px solid var(--line);border-radius:14px;background:#fff;
-  padding:11px 13px;font-size:.95rem;font-family:inherit;color:var(--ink);
+  padding:10px 13px;font-size:1rem;font-family:inherit;color:var(--ink);
 }
 .in:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,171,61,.18)}
 label.lb{display:block;font-size:.8rem;color:var(--ink2);margin:12px 2px 6px}
@@ -294,10 +295,10 @@ label.lb{display:block;font-size:.8rem;color:var(--ink2);margin:12px 2px 6px}
 .rankcard .dish{font-family:var(--serif);font-size:1.12rem;font-weight:700}
 .rankcard .grp{font-size:.75rem;color:var(--ink2);margin-top:1px}
 .rankcard .dims{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
-.rankcard .dims span{font-size:.68rem;color:var(--ink2);background:var(--greenbg);border:1px solid #dcead9;border-radius:99px;padding:2px 9px}
+.rankcard .dims span{font-size:.75rem;color:var(--ink2);background:var(--greenbg);border:1px solid #dcead9;border-radius:99px;padding:2px 9px}
 .rankcard .score{text-align:right;flex:none}
 .rankcard .score .n{font-family:var(--num);font-size:var(--fs-2xl);font-weight:800;color:var(--red);line-height:1.1;animation:popIn .5s cubic-bezier(.34,1.56,.64,1) both .2s}
-.rankcard .score .u{font-size:.66rem;color:var(--ink2)}
+.rankcard .score .u{font-size:.75rem;color:var(--ink2);letter-spacing:.12em}
 .progress.sm{height:7px;margin-top:9px}
 .prowline{display:flex;justify-content:space-between;font-size:.72rem;color:var(--ink2);margin-top:5px}
 
@@ -305,11 +306,12 @@ label.lb{display:block;font-size:.8rem;color:var(--ink2);margin:12px 2px 6px}
 .dishlist{margin-top:10px;border-top:1px dashed var(--line);padding-top:4px}
 .dishrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px dashed var(--line)}
 .dishrow:last-child{border-bottom:none}
-.dishrow .dn2{flex:none;max-width:40%;font-size:.88rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--serif)}
+.dishrow .dn2{flex:0 1 auto;min-width:0;max-width:40%;font-size:.88rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--serif)}
 .leader{flex:1;min-width:14px;border-bottom:2px dotted var(--line);margin:0 6px;transform:translateY(-4px)}
+.nw{white-space:nowrap}
 .dthumb{width:40px;height:40px;border-radius:12px;object-fit:cover;flex:none;background:#f5ede0}
 .dthumb.none{display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:var(--ink2);font-family:var(--serif)}
-.dishrow .dims2{flex:1;font-size:.68rem;color:var(--ink2);text-align:right}
+.dishrow .dims2{flex:none;font-size:.82rem;color:var(--ink2);text-align:right;white-space:nowrap}
 .dishrow .dv{font-family:var(--num);font-size:1.02rem;color:var(--red);flex:none}
 .dishrow .progress{flex:1}
 details.det{border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:10px;overflow:hidden}
@@ -325,7 +327,7 @@ details.det .inner{padding:4px 13px 12px;font-size:.8rem}
 .srow .who{color:var(--ink)}
 .srow .v{font-family:var(--num);font-weight:700;color:var(--red)}
 .srow.dropped{opacity:.45}
-.srow .droptag{font-size:.64rem;color:#fff;background:#b9ab94;border-radius:4px;padding:1px 6px;margin-left:6px}
+.srow .droptag{font-size:.7rem;color:#fff;background:#b9ab94;border-radius:4px;padding:1px 6px;margin-left:6px}
 .cmt{font-size:.74rem;color:var(--ink2);padding:0 0 7px 0;border-top:1px dashed var(--line);margin-top:-7px;padding-top:7px}
 
 /* ---------- 精彩瞬间 ---------- */
@@ -339,7 +341,7 @@ details.det .inner{padding:4px 13px 12px;font-size:.8rem}
 #lightbox.show{display:flex}
 #lightbox img{max-width:94vw;max-height:72vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .lb-cap{color:#fff;margin-top:14px;font-size:.85rem;text-align:center;padding:0 30px}
-.lb-hint{color:rgba(255,255,255,.5);font-size:.68rem;margin-top:6px}
+.lb-hint{color:rgba(255,255,255,.72);font-size:.75rem;margin-top:6px}
 .lb-x{position:absolute;top:calc(12px + env(safe-area-inset-top));right:16px;color:#fff;font-size:1.5rem;cursor:pointer;line-height:1}
 .lb-prev,.lb-next{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:2.2rem;opacity:.65;cursor:pointer;padding:26px 10px;user-select:none}
 .lb-prev{left:2px}.lb-next{right:2px}
@@ -443,14 +445,14 @@ footer{margin-top:30px;text-align:center;font-size:.7rem;color:#b9ab94}
 </svg>
 <div id="app"></div>
 <div id="toast"></div>
-<div id="modal"></div>
-<div id="lightbox">
-  <div class="lb-x" data-act="lbClose">✕</div>
-  <div class="lb-prev" data-act="lbNav" data-d="-1">‹</div>
+<div id="modal" role="dialog" aria-modal="true"></div>
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="照片查看">
+  <div class="lb-x" role="button" aria-label="关闭" data-act="lbClose">✕</div>
+  <div class="lb-prev" role="button" aria-label="上一张" data-act="lbNav" data-d="-1">‹</div>
   <img id="lbImg" src="" alt="">
-  <div class="lb-cap" id="lbCap"></div>
+  <div class="lb-cap" id="lbCap" aria-live="polite"></div>
   <div class="lb-hint">长按图片可保存 📲</div>
-  <div class="lb-next" data-act="lbNav" data-d="1">›</div>
+  <div class="lb-next" role="button" aria-label="下一张" data-act="lbNav" data-d="1">›</div>
 </div>
 
 <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
@@ -641,7 +643,7 @@ function computeResults(config,scoresMap){
       avgTotal:scored.length?+(scored.reduce((s,d)=>s+d.avgTotal,0)).toFixed(2):null,
     };
   });
-  rows.sort((a,b)=>(b.avgTotal??-1)-(a.avgTotal??-1));
+  rows.sort((a,b)=>(b.avgTotal==null?-1:b.avgTotal)-(a.avgTotal==null?-1:a.avgTotal));
   let lastScore=null,lastRank=0;
   rows.forEach((r,i)=>{r.rank=(r.avgTotal!==null&&r.avgTotal===lastScore)?lastRank:i+1;if(r.avgTotal!==null){lastScore=r.avgTotal;lastRank=r.rank;}});
   return rows;
@@ -767,6 +769,24 @@ const TcbAdapter={mode:'cloud',label:'云端同步',db:null,ready:false,
 
 /* =============== 滚动位置记录（轮询重渲染保持用） =============== */
 window.addEventListener('scroll',()=>{pageBoard._sy=window.scrollY;pageMoments._sy=window.scrollY;},{passive:true});
+/* 从后台切回前台：立即拉一次最新数据，不再等满一个轮询周期（弹窗/输入中自动跳过） */
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible')return;
+  const h=location.hash||'#/';
+  if(!h.startsWith('#/board')&&!h.startsWith('#/live')&&!h.startsWith('#/moments')&&!h.startsWith('#/admin')&&!(h.startsWith('#/judge')&&S.judgeTimer))return;
+  if(document.querySelector('#modal.show'))return;
+  setTimeout(async()=>{
+    try{
+      await loadAll();
+      if(document.visibilityState!=='visible')return;
+      const hh=location.hash||'#/';
+      if(hh.startsWith('#/board')||hh.startsWith('#/live')){if(S.pollTimer)pageBoard();}
+      else if(hh.startsWith('#/moments')){if(S.pollTimer)pageMoments();}
+      else if(hh.startsWith('#/admin')&&S.adminTimer){pageAdmin();}
+      else if(S.judgeTimer){pageJudgeMain();}
+    }catch(e){}
+  },200);
+});
 
 /* =============== 全局状态 =============== */
 const S={adapter:null,config:null,scoresMap:{},photos:[],myGroup:localStorage.getItem('cc_mygroup')||'',adminOk:false,adminTab:'groups',momentsView:'wall',draft:{},pollTimer:null,updatedAt:''};
@@ -776,7 +796,7 @@ function renderBanner(){
   if(S.adapter&&S.adapter.mode==='cloud'){
     b.className='banner';b.innerHTML=`<span class="dot"></span>云端实时同步${S.updatedAt?' · 更新于 '+esc(S.updatedAt):''}`;
   }else{
-    b.className='banner demo';b.innerHTML=`<span class="dot"></span>演示模式 · 数据仅保存在本机，刷新体验、正式使用请部署云端`;
+    b.className='banner demo';b.innerHTML=`<span class="tag"><span class="dot"></span>沙盘预演 · 数据仅存本机 · 开赛切换云端</span>`;
   }
 }
 async function loadAll(){
@@ -830,7 +850,7 @@ function render(){
   pageHome();
 }
 function topbar(title,right=''){
-  return `<div class="topbar"><button class="back" data-act="go" data-to="#/">‹</button>
+  return `<div class="topbar"><button class="back" aria-label="返回首页" data-act="go" data-to="#/">‹</button>
     <div class="tt">${esc(title)}</div><div class="tr">${right}</div></div>`;
 }
 const phaseName={setup:'备菜中 · 等开火',scoring:'干饭评分进行中',finished:'榜单出炉啦'};
@@ -925,7 +945,7 @@ function pageJudgePick(){
     <div class="h2">你是哪一组的评委？</div>
     <div class="hint">每组推举一位代表打分，请选择自己所在的组——本组菜品将自动回避。</div>
     <div class="gpick">${gs.map((g,i)=>`
-      <div class="g" style="animation-delay:${i*0.05}s" data-act="pickGroup" data-gid="${g.id}">
+      <div class="g" data-act="pickGroup" data-gid="${g.id}">
         <div class="gseal">${esc((g.name.replace('第','').replace('组','')||g.name).slice(0,1))}</div>
         <div class="gn">${esc(g.name)}</div>
         <div class="gm">${g.members.length?esc(g.members.join(' · ')):'—'}</div>
@@ -1019,18 +1039,18 @@ function pageScoreForm(gid,idx){
   const others=[];
   S.config.groups.forEach(x=>{if(x.id!==g.id)x.dishes.forEach((_,di)=>others.push({gid:x.id,idx:di}));});
   const curPos=others.findIndex(o=>o.gid===gid&&o.idx===idx)+1;
-  $('#app').innerHTML=topbar(esc(t.name),curPos+' / '+others.length)+
+  $('#app').innerHTML=topbar(esc(t.name)+' · '+esc(dn||'未命名'),curPos+' / '+others.length)+
   `<div class="page">
     <div class="dishhead">
       <div style="width:64px;height:64px;color:var(--red);margin:0 auto 8px;transform:translateZ(0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%"><use href="#i-bowl"/></svg></div>
-      <div class="dz">${t.dishes.length>1?'本 组 第 '+'一二三'[idx]+' 道':'本 道 菜 品'}</div>
+      <div class="dz">${t.dishes.length>1?'第 '+(idx+1)+' 道菜':'本 道 菜 品'}</div>
       <div class="dn">${esc(dn||'未命名菜品')}</div>
       <div class="dg">${esc(t.name)}${t.members.length?' · '+esc(t.members.join('、')):''} 出品</div>
     </div>
     ${dims.map((d,i)=>`
-    <div class="card dimblock" style="animation-delay:${i*0.06}s">
+    <div class="card dimblock" style="animation:none">
       <div class="dtitle"><span class="n"><svg class="dimicon" viewBox="0 0 24 24"><use href="${'#'+dimIcon(d.key)}"/></svg>${' '+esc(d.name)}</span><span class="w">权重 ${d.weight}%</span></div>
-      <div class="ddesc">${esc(dimNoteText(d.key))} · 1–10 分</div>
+      <div class="ddesc">${esc(dimNoteText(d.key))} · 1–10 分（10=米其林，1=黑暗料理）</div>
       <div class="score-grid">
         ${Array.from({length:10},(_,k)=>k+1).map(v=>
           `<button class="${draft.scores[d.key]===v?'on':''}" data-act="pick" data-dim="${d.key}" data-v="${v}">${v}</button>`).join('')}
@@ -1086,7 +1106,7 @@ async function pageBoard(){
       return `<div class="dishrow">${t}
         <span class="dn2">${esc(d.name)}</span>
         <span class="leader"></span>
-        <span class="dims2">${d.dims.map(x=>esc(x.name)+' '+x.avg).join(' · ')}</span>
+        <span class="dims2">${d.dims.map(x=>esc(x.name)+x.avg).join('·')}</span>
         <b class="dv">${d.avgTotal}</b>
       </div>`;
     }
@@ -1103,7 +1123,7 @@ async function pageBoard(){
       <div class="h2" style="margin-top:0">🍽 全场战况 <span style="font-size:.6em;color:var(--ok);font-weight:400">● 6 秒自动刷新</span></div>
       <div style="display:flex;align-items:baseline;gap:8px;margin:2px 0 10px">
         <span style="font-family:var(--num);font-size:2rem;font-weight:800;color:var(--red)">${total}</span>
-        <span style="font-size:.85rem;color:var(--ink2)">/ ${exp} 份评分已收到</span>
+        <span class="nw" style="font-size:.85rem;color:var(--ink2)">/ ${exp} 份评分已收到</span>
         <span style="margin-left:auto">${phaseName[c.phase]}</span>
       </div>
       <div class="progress"><i style="width:${exp?Math.round(total/exp*100):0}%"></i></div>
@@ -1138,7 +1158,7 @@ async function pageBoard(){
         <div class="badge">${badge(r)}</div>
         <div class="body">
           <div class="dish">${esc(r.name)}${r.rank===1&&show?' <span style="font-size:.7em;color:var(--gold)">· 吃喝大王</span>':''}</div>
-          <div class="grp">${esc(r.members.join('、'))||'—'} · ${r.receivedTotal}/${r.expectedTotal} 份评分${show&&c.phase==='scoring'&&r.receivedTotal===r.expectedTotal&&r.expectedTotal>0?` · <b style="color:var(--gold)">暂列第${r.rank}</b>`:''}</div>
+          <div class="grp">${esc(r.members.join('、'))||'—'} · <span class="nw">${r.receivedTotal}/${r.expectedTotal} 份评分${show&&c.phase==='scoring'&&r.receivedTotal===r.expectedTotal&&r.expectedTotal>0?` · <b style="color:var(--gold)">暂列第${r.rank}</b>`:''}</span></div>
         </div>
         ${show&&r.avgTotal!==null?`<div class="score"><div class="n">${r.avgTotal}</div><div class="u">小组总分</div></div>`:''}
       </div>
@@ -1618,12 +1638,13 @@ async function pageAdmin(){
       <div class="rankcard ${r.rank===1?'r1':r.rank===2?'r2':r.rank===3?'r3':''}">
         <div class="badge">${r.rank}</div>
         <div class="body"><div class="dish">${esc(r.name)}${r.rank===1&&r.avgTotal!==null?' · 吃喝大王':''}</div><div class="grp">${esc(r.members.join('、'))||'—'} · ${r.receivedTotal}/${r.expectedTotal} 份</div></div>
-        <div class="score"><div class="n">${r.avgTotal??'—'}</div><div class="u">总分</div></div>
+        <div class="score"><div class="n">${r.avgTotal==null?'—':r.avgTotal}</div><div class="u">总分</div></div>
       </div>
       ${r.dishes.map(d=>`
       <div class="dishlist"><div class="dishrow"><span class="dn2">${esc(d.name)}</span>
-        <span class="dims2">${d.dims.map(x=>esc(x.name)+' '+x.avg).join(' · ')}</span>
-        <b class="dv">${d.avgTotal??'—'}</b></div></div>
+        <span class="leader"></span>
+        <span class="dims2">${d.dims.map(x=>esc(x.name)+x.avg).join('·')}</span>
+        <b class="dv">${d.avgTotal==null?'—':d.avgTotal}</b></div></div>
       <details class="det"><summary>「${esc(d.name)}」评分明细</summary><div class="inner">
         ${d.entries.map(e=>`<div class="srow ${d.dropped.includes(e)?'dropped':''}">
           <span class="who">${esc(e.jname)}${e.judgeName?' · '+esc(e.judgeName):''}${d.dropped.includes(e)?'<span class="droptag">去极值</span>':''}</span>
@@ -1632,7 +1653,7 @@ async function pageAdmin(){
       </div></details>`).join('')}
     </div>`).join('')}
     <button class="btn ghost block" data-act="copyResults">📋 复制结果文本（发群用）</button>`;
-    S._resultText=rows.map(r=>`${r.rank}. ${r.name}（${r.members.join('、')}） 总分 ${r.avgTotal??'—'}\n`+r.dishes.map(d=>`   · ${d.name} ${d.avgTotal??'—'} 分`).join('\n')).join('\n');
+    S._resultText=rows.map(r=>`${r.rank}. ${r.name}（${r.members.join('、')}） 总分 ${r.avgTotal==null?'—':r.avgTotal}\n`+r.dishes.map(d=>`   · ${d.name} ${d.avgTotal==null?'—':d.avgTotal} 分`).join('\n')).join('\n');
   }
   $('#app').innerHTML=topbar('主持人后台','已解锁')+
   `<div class="page">
