@@ -84,6 +84,8 @@ button{font-family:inherit;cursor:pointer;-webkit-user-select:none;user-select:n
   background:repeating-linear-gradient(90deg,var(--gold) 0 8px,transparent 8px 13px,var(--green) 13px 21px,transparent 21px 26px);
 }
 .hero .sub{margin-top:20px;font-size:.85rem;color:var(--ink2)}
+.hero .whenplace{margin-top:18px;font-size:.88rem;color:var(--ink);letter-spacing:.03em;animation:floatIn .5s ease both .18s}
+.hero .whenplace + .sub{margin-top:8px}
 .hero .stamp{
   position:absolute;right:2px;top:18px;width:62px;height:62px;color:var(--red);
   display:flex;align-items:center;justify-content:center;
@@ -550,7 +552,7 @@ function defaultConfig(){
     v:3,phase:'setup',
     settings:{
       eventName:'「吃喝大王」厨艺比赛',
-      eventNote:'10 月 11 日 · 珠江星火1926 三楼',
+      eventWhen:'',eventWhere:'',
       dims:[{key:'color',name:'色',weight:30},{key:'aroma',name:'香',weight:30},{key:'taste',name:'味',weight:40}],
       dropExtremes:true,hideScoresDuringScoring:true,
     },
@@ -561,7 +563,7 @@ function defaultConfig(){
 function demoConfig(){
   const c=defaultConfig();
   c.phase='scoring';
-  c.settings.eventNote='第二届 · 匿名互评 · 本组回避';
+  c.settings.eventWhen='10 月 11 日 16:00–21:00';c.settings.eventWhere='珠江星火1926 三楼';
   c.groups=[
     {id:'g1',name:'干饭双人组',dishes:['蜜汁叉烧','上汤菜心'],members:['王大厨','阿芳'],judge:'王大厨'},
     {id:'g2',name:'江南小馆',dishes:['龙井虾仁','腌笃鲜'],members:['沈师傅','小莲'],judge:'小莲'},
@@ -585,6 +587,8 @@ function normalizeConfig(c){
   });
   if(!c.settings)c.settings=defaultConfig().settings;
   if(!c.settings.eventNote)c.settings.eventNote='';
+  if(!c.settings.eventWhen)c.settings.eventWhen='';
+  if(!c.settings.eventWhere)c.settings.eventWhere='';
   const keys=(c.settings.dims||[]).map(d=>d.key).join(',');
   if(keys==='taste,look,idea'){   // 旧版三维度 → 色香味（旧评分因 key 不匹配自动失效，不会计入）
     c.settings.dims=defaultConfig().settings.dims;
@@ -976,6 +980,7 @@ function pageHome(){
     <div class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="width:17px;height:17px"><use href="#i-chopsticks"/></svg>开饭啦 · 干饭人集合</div>
     <h1>${esc(c.settings.eventName)}</h1>
     <div class="stamp"><svg class="stamp-svg" viewBox="0 0 48 48"><use href="#i-seal"/></svg><span>品鉴</span></div>
+    ${(c.settings.eventWhen||c.settings.eventWhere)?`<div class="whenplace">📅 ${esc(c.settings.eventWhen||'')}${c.settings.eventWhen&&c.settings.eventWhere?'　':' '}${c.settings.eventWhere?'📍 '+esc(c.settings.eventWhere):''}</div>`:''}
     <div class="sub">${esc(c.settings.eventNote||'组间互评 · 除本组外每组出一人 · 十分制 · 匿名')}</div>
     <div class="pill ${c.phase}"><span class="pdot"></span>${phaseName[c.phase]}</div>
   </div>
@@ -1301,7 +1306,7 @@ async function drawPoster(){
   [['🍅',60,80,42],['🥕',650,60,38],['🍳',560,150,34],['🥬',90,190,30],['✨',380,70,26]].forEach(it=>{ctx.font=it[3]+'px sans-serif';ctx.fillText(it[0],it[1],it[2]);});
   ctx.globalAlpha=1;
   ctx.textAlign='center';
-  ctx.fillStyle='rgba(255,255,255,.9)';ctx.font=SFONT(24);ctx.fillText('🍚 '+(c.settings.eventNote||'比赛圆满结束'),W/2,84);
+  ctx.fillStyle='rgba(255,255,255,.9)';ctx.font=SFONT(24);ctx.fillText('🍚 '+([c.settings.eventWhen,c.settings.eventWhere].filter(Boolean).join(' · ')||'比赛圆满结束'),W/2,84);
   ctx.fillStyle='#fff';ctx.font=FONT(52);ctx.fillText(fit(c.settings.eventName,52,W-140),W/2,150);
   ctx.font='44px sans-serif';ctx.fillText('🏆 👑 🏆',W/2,216);
   ctx.fillStyle='rgba(255,255,255,.95)';ctx.font=FONT(26);ctx.fillText('· 三 强 荣 誉 榜 ·',W/2,262);
@@ -1414,7 +1419,7 @@ async function pageMoments(){
       <div class="corner"></div>
       <div style="font-size:2.6rem;animation:bob 3s ease-in-out infinite">🍲</div>
       <div class="pbig">${esc(c.settings.eventName)}</div>
-      <div class="psub">${esc(c.settings.eventNote||'')} · 精彩瞬间合集</div>
+      <div class="psub">${c.settings.eventWhen||c.settings.eventWhere?esc([c.settings.eventWhen,c.settings.eventWhere].filter(Boolean).join(' · '))+' · ':''}精彩瞬间合集</div>
       ${top3.length?`<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:8px">
         ${top3.map(r=>`<span style="font-size:.8rem;background:var(--goldbg);border:1px solid rgba(242,166,75,.5);border-radius:99px;padding:5px 13px">${({1:'🥇',2:'🥈',3:'🥉'})[r.rank]} ${esc(r.name)} ${r.avgTotal}分</span>`).join('')}
       </div>`:''}
@@ -1598,7 +1603,8 @@ async function pageAdmin(){
     body=`<div class="card">
       <div class="corner"></div>
       <label class="lb">活动名称</label><input class="in" id="evName" value="${esc(s.eventName)}" maxlength="30">
-      <label class="lb">活动信息（显示在首页，如时间地点）</label><input class="in" id="evNote" value="${esc(s.eventNote||'')}" maxlength="40" placeholder="如：10 月 11 日 · 珠江星火1926 三楼">
+      <label class="lb">比赛时间</label><input class="in" id="evWhen" value="${esc(s.eventWhen||'')}" maxlength="30" placeholder="如：10 月 11 日 16:00–21:00">
+      <label class="lb">比赛地点</label><input class="in" id="evWhere" value="${esc(s.eventWhere||'')}" maxlength="30" placeholder="如：珠江星火1926 三楼">
       <label class="lb">评分维度与权重（合计不必为 100，按比例折算）</label>
       <div id="dimList">${s.dims.map((d,i)=>`
         <div class="frow" style="margin-bottom:8px" data-i="${i}">
@@ -2022,7 +2028,8 @@ document.addEventListener('click',async e=>{
     else if(act==='saveSettings'){
       const s=S.config.settings;
       const evName=($('#evName').value||'').trim()||'厨艺比赛';
-      const evNote=($('#evNote').value||'').trim();
+      const evWhen=($('#evWhen').value||'').trim();
+      const evWhere=($('#evWhere').value||'').trim();
       const dimRows=$$('#dimList .frow');
       const nd=dimRows.map(r=>({
         name:($('[data-f="dname"]',r).value||'').trim(),
@@ -2043,7 +2050,7 @@ document.addEventListener('click',async e=>{
         S.scoresMap={};
       }
       s.eventName=evName;
-      s.eventNote=evNote;
+      s.eventWhen=evWhen;s.eventWhere=evWhere;
       s.dims=nd.map((d,i)=>({key:'d'+i+'_'+Date.now().toString(36),name:d.name,weight:d.weight}));
       s.dropExtremes=drop;s.hideScoresDuringScoring=hide;
       if(newPinHash)S.config.pinHash=newPinHash;
