@@ -563,7 +563,7 @@ function defaultConfig(){
 function demoConfig(){
   const c=defaultConfig();
   c.phase='scoring';
-  c.settings.eventWhen='10 月 11 日 16:00–21:00';c.settings.eventWhere='珠江星火1926 三楼';
+  c.settings.eventWhen='周六 18:00–21:00';c.settings.eventWhere='老地方 · 三楼大堂';
   c.groups=[
     {id:'g1',name:'干饭双人组',dishes:['蜜汁叉烧','上汤菜心'],members:['王大厨','阿芳'],judge:'王大厨'},
     {id:'g2',name:'江南小馆',dishes:['龙井虾仁','腌笃鲜'],members:['沈师傅','小莲'],judge:'小莲'},
@@ -1603,8 +1603,8 @@ async function pageAdmin(){
     body=`<div class="card">
       <div class="corner"></div>
       <label class="lb">活动名称</label><input class="in" id="evName" value="${esc(s.eventName)}" maxlength="30">
-      <label class="lb">比赛时间</label><input class="in" id="evWhen" value="${esc(s.eventWhen||'')}" maxlength="30" placeholder="如：10 月 11 日 16:00–21:00">
-      <label class="lb">比赛地点</label><input class="in" id="evWhere" value="${esc(s.eventWhere||'')}" maxlength="30" placeholder="如：珠江星火1926 三楼">
+      <label class="lb">比赛时间</label><input class="in" id="evWhen" value="${esc(s.eventWhen||'')}" maxlength="30" placeholder="如：11 月 11 日 18:00–21:00">
+      <label class="lb">比赛地点</label><input class="in" id="evWhere" value="${esc(s.eventWhere||'')}" maxlength="30" placeholder="如：××餐厅 · 三楼大堂">
       <label class="lb">评分维度与权重（合计不必为 100，按比例折算）</label>
       <div id="dimList">${s.dims.map((d,i)=>`
         <div class="frow" style="margin-bottom:8px" data-i="${i}">
