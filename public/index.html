@@ -1136,7 +1136,14 @@ async function pageBoard(){
   const rows=computeResults(c,S.scoresMap);
   const show0=canSeeScores();
   const playReveal=show0&&c.phase==='finished'&&rows.some(r=>r.avgTotal!==null)&&!sessionStorage.getItem('cc_revealed');
-  if(playReveal)sessionStorage.setItem('cc_revealed','1');
+  if(playReveal){
+    sessionStorage.setItem('cc_revealed','1');
+    // 揭晓动画+彩带播完后自动绘制结果海报（长按即存，无需手动点按钮）
+    const nR=rows.length||1;
+    setTimeout(()=>{
+      if((location.hash||'').startsWith('#/board')||(location.hash||'').startsWith('#/live'))drawPoster();
+    },nR*850+2500);
+  }
   const show=canSeeScores();
   const dishMap=await S.adapter.ensureDishPhotos();
   S._dishMap=dishMap;
@@ -1264,7 +1271,7 @@ async function drawPoster(){
   const loadImg=u=>new Promise(res=>{if(!u)return res(null);const im=new Image();let done=false;const t=setTimeout(()=>{if(!done){done=true;res(null);}},3500);im.crossOrigin='anonymous';im.onload=()=>{if(!done){done=true;clearTimeout(t);res(im);}};im.onerror=()=>{if(!done){done=true;clearTimeout(t);res(null);}};im.src=u;});
   const dishImg={};const jobs=[];
   for(const g of c.groups){dishImg[g.id]=[];(g.dishes||[]).forEach((_,i)=>{const j=loadImg(dp[g.id+'_'+i]||(g.dishPhotos||[])[i]);jobs.push(j);dishImg[g.id].push(j);});}
-  const mImgs=(S.photos||[]).slice(0,4).map(ph=>loadImg(pd[ph.id]));
+  const mImgs=await Promise.all((S.photos||[]).slice(0,4).map(ph=>loadImg(pd[ph.id])));
   await Promise.all([].concat(jobs,mImgs));
   for(const g of c.groups){dishImg[g.id]=await Promise.all(dishImg[g.id]);}
   const hasMoments=mImgs.some(Boolean);
