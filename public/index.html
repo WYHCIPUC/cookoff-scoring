@@ -780,9 +780,10 @@ document.addEventListener('visibilitychange',()=>{
       await loadAll();
       if(document.visibilityState!=='visible')return;
       const hh=location.hash||'#/';
-      if(hh.startsWith('#/board')||hh.startsWith('#/live')){if(S.pollTimer)pageBoard();}
-      else if(hh.startsWith('#/moments')){if(S.pollTimer)pageMoments();}
-      else if(hh.startsWith('#/admin')&&S.adminTimer){pageAdmin();}
+      const changed=dataFingerprint()!==S._fp;
+      if(hh.startsWith('#/board')||hh.startsWith('#/live')){if(S.pollTimer&&changed)preserveOpenDetails(pageBoard);}
+      else if(hh.startsWith('#/moments')){if(S.pollTimer&&changed)pageMoments();}
+      else if(hh.startsWith('#/admin')&&S.adminTimer){if(changed)preserveOpenDetails(pageAdmin);}
       else if(S.judgeTimer){pageJudgeMain();}
     }catch(e){}
   },200);
@@ -829,6 +830,61 @@ async function boot(){
 }
 
 /* =============== 路由与渲染 =============== */
+/* =============== 照片打包下载（store-only zip，零依赖） =============== */
+const _crcT=(function(){const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c}return t})();
+function crc32(u8){let c=0xFFFFFFFF;for(let i=0;i<u8.length;i++)c=_crcT[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function b64ToU8(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+function safeName(s){return (s||'').replace(/[\\/:*?"<>|\s]+/g,'_').slice(0,40)||'照片'}
+function makeZip(files){ // files:[{name,u8}] → Blob
+  const enc=new TextEncoder();const chunks=[];const cd=[];let off=0;
+  const now=new Date();
+  const dT=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+  const dD=(((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate());
+  files.forEach(f=>{
+    const nb=enc.encode(f.name);const crc=crc32(f.u8);
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);
+    lh.setUint16(10,dT,true);lh.setUint16(12,dD,true);lh.setUint32(14,crc,true);
+    lh.setUint32(18,f.u8.length,true);lh.setUint32(22,f.u8.length,true);
+    lh.setUint16(26,nb.length,true);lh.setUint16(28,0,true);
+    chunks.push(new Uint8Array(lh.buffer),nb,f.u8);
+    cd.push({nb,crc,sz:f.u8.length,off});off+=30+nb.length+f.u8.length;
+  });
+  const cdStart=off;
+  cd.forEach(c=>{
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);
+    ch.setUint16(12,dT,true);ch.setUint16(14,dD,true);ch.setUint32(16,c.crc,true);
+    ch.setUint32(20,c.sz,true);ch.setUint32(24,c.sz,true);
+    ch.setUint16(28,c.nb.length,true);ch.setUint16(30,0,true);ch.setUint16(32,0,true);
+    ch.setUint16(34,0,true);ch.setUint16(36,0,true);ch.setUint32(38,0,true);ch.setUint32(42,c.off,true);
+    chunks.push(new Uint8Array(ch.buffer),c.nb);off+=46+c.nb.length;
+  });
+  const eo=new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true);eo.setUint16(8,cd.length,true);eo.setUint16(10,cd.length,true);
+  eo.setUint32(12,off-cdStart,true);eo.setUint32(16,cdStart,true);
+  chunks.push(new Uint8Array(eo.buffer));
+  return new Blob(chunks,{type:'application/zip'});
+}
+/* 数据指纹：轮询拉到的数据没变就不重渲染（防后台/榜单/照片墙周期性闪烁、details 被折叠） */
+function dataFingerprint(){
+  try{
+    return JSON.stringify([
+      S.config.phase,
+      (S.config.groups||[]).map(g=>[g.id,g.name,g.judge||'',(g.members||[]).join('、'),(g.dishes||[]).join('/'),(g.dishPhotos||[]).map(p=>p?p.length:0).join(',')].join('|')).join(';'),
+      S.scoresMap,
+      (S.photos||[]).map(p=>p.id+':'+(p.ts||0)).join(',')
+    ]);
+  }catch(e){return 'err'+Date.now()}
+}
+/* 重渲染前后保持 <details> 展开状态（按出现顺序对位） */
+function preserveOpenDetails(renderFn){
+  const all=[].slice.call(document.querySelectorAll('#app details'));
+  const openIdx=all.filter(d=>d.open).map(d=>all.indexOf(d));
+  renderFn();
+  const ds=document.querySelectorAll('#app details');
+  openIdx.forEach(i=>{if(ds[i])ds[i].open=true;});
+}
 const myGroupObj=()=>S.config.groups.find(g=>g.id===S.myGroup)||null;
 const canSeeScores=()=>S.config.phase!=='scoring'||!S.config.settings.hideScoresDuringScoring;
 
@@ -963,6 +1019,11 @@ function pageJudgeMain(){
   const others=[];
   S.config.groups.forEach(x=>{if(x.id!==g.id)x.dishes.forEach((dn,idx)=>others.push({x,idx,dn}));});
   const done=others.filter(o=>mine[o.x.id]&&mine[o.x.id][o.idx]&&mine[o.x.id][o.idx][g.id]).length;
+  // 流水线模式：评分中还有未评的菜 → 直接进入打分表，不打扰人工挑菜；全部评完才回工作台（可 ✎ 修改）
+  if(S.config.phase==='scoring'){
+    const next=others.find(o=>!(mine[o.x.id]&&mine[o.x.id][o.idx]&&mine[o.x.id][o.idx][g.id]));
+    if(next){location.replace('#/score/'+next.x.id+'/'+next.idx);return;}
+  }
   const dims=S.config.settings.dims;
   const wSum=dims.reduce((s,d)=>s+(+d.weight||0),0)||100;
   const dishNo=(idx)=>g.dishes.length>1?'第'+'一二三'[idx]+'道':'';
@@ -1180,9 +1241,11 @@ async function pageBoard(){
   </div>`;
   requestAnimationFrame(()=>window.scrollTo(0,pageBoard._sy!=null?pageBoard._sy:_sy));
   if(playReveal){setTimeout(confetti,rows.length*850+300);toast('🏆 榜单揭晓！');}
+  S._fp=dataFingerprint();
+  if(S.pollTimer){clearInterval(S.pollTimer);S.pollTimer=null;}
   S.pollTimer=setInterval(async()=>{
     if(document.visibilityState!=='visible')return;
-    try{await loadAll();if(location.hash.startsWith('#/board')||location.hash.startsWith('#/live'))pageBoard();}catch(e){}
+    try{await loadAll();if((location.hash.startsWith('#/board')||location.hash.startsWith('#/live'))&&dataFingerprint()!==S._fp)preserveOpenDetails(pageBoard);}catch(e){}
   },6000);
 }
 
@@ -1389,12 +1452,14 @@ async function pageMoments(){
   }
   $('#app').innerHTML=topbar('精彩瞬间',photos.length?photos.length+' 张':'')+`<div class="page">${body}</div>`;
   requestAnimationFrame(()=>{if(pageMoments._sy!=null)window.scrollTo(0,pageMoments._sy);});
+  S._fp=dataFingerprint();
+  if(S.pollTimer){clearInterval(S.pollTimer);S.pollTimer=null;}
   S.pollTimer=setInterval(async()=>{
     if(document.visibilityState!=='visible')return;
     if(document.querySelector('#modal.show')||document.querySelector('#lightbox.show'))return;
     const ae=document.activeElement;
     if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;
-    try{await loadAll();if(location.hash.startsWith('#/moments'))pageMoments();}catch(e){}
+    try{await loadAll();if(location.hash.startsWith('#/moments')&&dataFingerprint()!==S._fp)pageMoments();}catch(e){}
   },20000);
 }
 
@@ -1626,6 +1691,12 @@ async function pageAdmin(){
       ${recent.length?recent.map(e=>`<div class="evrow"><span class="t">${fmtAgo(e.ts)}</span><span class="m">${esc(e.jname)} 评了「${esc(e.dish)}」</span></div>`).join(''):'<div class="hint">暂无动态，等评委们开动 🥢</div>'}
       </div>
     </details>
+    <div class="card">
+      <div class="corner"></div>
+      <div class="h2" style="margin-top:0">💾 照片备份</div>
+      <div class="hint" style="margin:0 0 10px">把「精彩瞬间」与「菜品靓照」全部打包成 zip 一次下载。手机微信里若没反应，点右上角 ··· 选「在浏览器打开」再试；<b>用电脑浏览器打开后台下载最稳</b>。</div>
+      <button class="btn ghost block" data-act="zipPhotos">📥 打包下载全部照片（.zip）</button>
+    </div>
     <div class="dangerzone">
       <div class="t">危险区</div>
       <button class="btn danger block" data-act="resetAll">清空一切（队伍、评分、设置全部恢复默认）</button>
@@ -1660,16 +1731,18 @@ async function pageAdmin(){
     <div class="tabs">${tabs.map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="adminTab" data-tab="${k}">${n}</button>`).join('')}</div>
     ${body}
   </div>`;
-  // 赛程控制 / 结果明细 每 6 秒自动刷新；编辑类页面与弹窗、输入中不打扰
+  S._fp=dataFingerprint();
+  // 赛程控制 / 结果明细 每 6 秒自动刷新；编辑类页面与弹窗、输入中不打扰；数据没变化不重渲染（防闪烁）
   if(tab==='control'||tab==='results'){
-    S.adminTimer=setInterval(async()=>{
+    if(S.adminTimer){clearInterval(S.adminTimer);S.adminTimer=null;}
+  S.adminTimer=setInterval(async()=>{
       if(document.visibilityState!=='visible')return;
       if(document.querySelector('#modal.show'))return;
       const ae=document.activeElement;
-      if(ae&&/INPUT|TEXTAREA|SELECT|BUTTON/.test(ae.tagName)&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;
+      if(ae&&/INPUT|TEXTAREA|SELECT/.test(ae.tagName))return;
       try{
         await loadAll();
-        if(location.hash.startsWith('#/admin')&&(S.adminTab==='control'||S.adminTab==='results'))pageAdmin();
+        if(location.hash.startsWith('#/admin')&&(S.adminTab==='control'||S.adminTab==='results')&&dataFingerprint()!==S._fp)preserveOpenDetails(pageAdmin);
       }catch(e){}
     },6000);
   }
@@ -2003,6 +2076,41 @@ document.addEventListener('click',async e=>{
       }
       S.config=defaultConfig();S.scoresMap={};S.draft={};
       await S.adapter.saveConfig(S.config);await loadAll();pageAdmin();toast('已恢复默认');
+    }
+    else if(act==='zipPhotos'){
+      if(el.dataset.busy)return;
+      el.dataset.busy='1';const oldTxt=el.textContent;el.textContent='📦 正在收集照片…';
+      try{
+        const pd=await S.adapter.ensurePhotoData();
+        const dd=await S.adapter.ensureDishPhotos();
+        const files=[];
+        const hm=n=>{const d=new Date(n||Date.now());return ('0'+d.getHours()).slice(-2)+('0'+d.getMinutes()).slice(-2)};
+        S.photos.forEach(p=>{
+          const d=pd[p.id]||'';
+          if(d.indexOf('base64,')>0)files.push({name:'精彩瞬间/'+safeName(p.caption||((S.config.groups.find(g=>g.id===p.gid)||{}).name||'花絮'))+'_'+hm(p.ts)+'.jpg',u8:b64ToU8(d.split('base64,')[1])});
+        });
+        S.config.groups.forEach(g=>{
+          (g.dishPhotos||[]).forEach((f,i)=>{
+            if(f&&f.indexOf('base64,')>0)files.push({name:'菜品靓照/'+safeName(g.name)+'_'+safeName(g.dishes[i]||('第'+(i+1)+'道'))+'.jpg',u8:b64ToU8(f.split('base64,')[1])});
+          });
+          Object.keys(dd).forEach(k=>{
+            if(k.indexOf(g.id+'_')!==0)return;
+            const i=+k.split('_')[1];const d=dd[k]||'';
+            if(d.indexOf('base64,')>0&&!files.some(x=>x.name==='菜品靓照/'+safeName(g.name)+'_'+safeName(g.dishes[i]||('第'+(i+1)+'道'))+'.jpg'))
+              files.push({name:'菜品靓照/'+safeName(g.name)+'_'+safeName(g.dishes[i]||('第'+(i+1)+'道'))+'.jpg',u8:b64ToU8(d.split('base64,')[1])});
+          });
+        });
+        if(!files.length){toast('还没有可下载的照片');el.textContent=oldTxt;delete el.dataset.busy;return;}
+        el.textContent='📦 正在压缩 '+files.length+' 张…';
+        await new Promise(r=>setTimeout(r,30));
+        const blob=makeZip(files);
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;a.download='吃喝大王_照片备份_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.zip';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        toast('已打包 '+files.length+' 张照片（约 '+(blob.size/1024/1024).toFixed(1)+'MB）· 微信内没反应请用浏览器打开');
+      }catch(e){toast('打包失败：'+(e.message||e));}
+      el.textContent=oldTxt;delete el.dataset.busy;
     }
   }catch(err){console.error(err);toast('操作失败：'+(err.message||err));
     if(act==='submitScore'&&el&&!el.dataset.ok){el.disabled=false;el.textContent='封 存 评 分';}}
