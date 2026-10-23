@@ -552,6 +552,7 @@ function defaultConfig(){
     v:3,phase:'setup',
     settings:{
       eventName:'厨艺比赛',
+      trophyName:'冠军',
       eventWhen:'',eventWhere:'',
       dims:[{key:'color',name:'色',weight:30},{key:'aroma',name:'香',weight:30},{key:'taste',name:'味',weight:40}],
       dropExtremes:true,hideScoresDuringScoring:true,
@@ -565,6 +566,7 @@ function demoConfig(){
   c.phase='scoring';
   c.pinHash=pinHash('demo');
   c.settings.eventWhen='周六 18:00–21:00';c.settings.eventWhere='老地方 · 三楼大堂';
+  c.settings.trophyName='本届冠军';
   c.groups=[
     {id:'g1',name:'干饭双人组',dishes:['蜜汁叉烧','上汤菜心'],members:['王大厨','阿芳'],judge:'王大厨'},
     {id:'g2',name:'江南小馆',dishes:['龙井虾仁','腌笃鲜'],members:['沈师傅','小莲'],judge:'小莲'},
@@ -588,6 +590,7 @@ function normalizeConfig(c){
   });
   if(!c.settings)c.settings=defaultConfig().settings;
   if(!c.settings.eventNote)c.settings.eventNote='';
+  if(!c.settings.trophyName)c.settings.trophyName='冠军';
   if(!c.settings.eventWhen)c.settings.eventWhen='';
   if(!c.settings.eventWhere)c.settings.eventWhere='';
   const keys=(c.settings.dims||[]).map(d=>d.key).join(',');
@@ -1046,7 +1049,7 @@ function pageHome(){
   let guide='',dot='';
   if(c.phase==='setup'){dot='⏳';guide=g?'等主持人喊「开火」，先吃为敬':'比赛还没开始，可以先到处逛逛';}
   else if(c.phase==='scoring'){dot='🔥';guide=g?(done&&done.d>=done.t?'你已全部评完，等收锅揭晓啦':'你是'+g.name+'的评委 · 已完成 '+done.d+'/'+done.t+' 道菜'):'评委请点下方大卡片进入打分';}
-  else{dot='🏁';guide='比赛已结束 · 点「榜单」看「吃喝大王」是谁';}
+  else{dot='🏁';guide='比赛已结束 · 点「榜单」看「'+(c.settings.trophyName||'冠军')+'」是谁';}
   if(c.phase==='scoring')guide=dot+' '+guide;   // 评分中引导语已含进度，不再追加状态
   else guide=dot+' '+guide+'　·　'+phaseName[c.phase];
   $('#app').innerHTML=`
@@ -1291,7 +1294,7 @@ async function pageBoard(){
       <div style="width:54px;height:54px;color:var(--gold);animation:bob 2.6s ease-in-out infinite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" style="width:100%;height:100%"><use href="#i-crown"/></svg></div>
       <div class="pbig">榜单已揭晓！</div>
       <div class="psub" style="font-size:.78rem;color:var(--gold)">✨ 逐组揭晓中，王者压轴…</div>
-      <div class="psub">${rows.filter(r=>r.rank===1).length>1?'本届并列「吃喝大王」×'+rows.filter(r=>r.rank===1).length+'！':'总分最高者荣膺「吃喝大王」'}</div>
+      <div class="psub">${rows.filter(r=>r.rank===1).length>1?'本届并列「'+(c.settings.trophyName||'冠军')+'」×'+rows.filter(r=>r.rank===1).length+'！':'总分最高者荣膺「'+(c.settings.trophyName||'冠军')+'」'}</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <button class="btn primary" data-act="genPoster">生成结果海报</button>
         <a class="btn ghost" style="text-decoration:none" href="#/moments">精彩瞬间</a>
@@ -1304,7 +1307,7 @@ async function pageBoard(){
       <div class="rankcard ${r.rank===1?'r1':r.rank===2?'r2':r.rank===3?'r3':''}">
         <div class="badge">${badge(r)}</div>
         <div class="body">
-          <div class="dish">${esc(r.name)}${r.rank===1&&show?' <span style="font-size:.7em;color:var(--gold)">· 吃喝大王</span>':''}</div>
+          <div class="dish">${esc(r.name)}${r.rank===1&&show?' <span style="font-size:.7em;color:var(--gold)">· '+(c.settings.trophyName||'冠军')+'</span>':''}</div>
           <div class="grp">${esc(r.members.join('、'))||'—'} · <span class="nw">${r.receivedTotal}/${r.expectedTotal} 份评分${show&&c.phase==='scoring'&&r.receivedTotal===r.expectedTotal&&r.expectedTotal>0?` · <b style="color:var(--gold)">暂列第${r.rank}</b>`:''}</span></div>
         </div>
         ${show&&r.avgTotal!==null?`<div class="score"><div class="n">${r.avgTotal}</div><div class="u">小组总分</div></div>`:''}
@@ -1405,10 +1408,11 @@ async function drawPoster(){
     ctx.drawImage(c20,W/2-30,y+34,60,60);})();
   ctx.fillStyle='#3d3226';
   ctx.fillStyle='#f2a64b';rr(W/2-130,y+82,260,52,26);ctx.fill();
-  ctx.fillStyle='#fff';ctx.font=FONT(28);ctx.fillText('吃 喝 大 王',W/2,y+118);
+  const trophyText=fit((c.settings.trophyName||'冠军').split('').join(' '),28,W-240);
+  ctx.fillStyle='#fff';ctx.font=FONT(28);ctx.fillText(trophyText,W/2,y+118);
   ctx.fillStyle='#4a3b2f';ctx.font=FONT(40);
   ctx.fillText(fit(champs.map(r=>r.name+' '+r.members.join(' ')).join(' & '),40,W-140),W/2,y+182);
-  if(champs.length>1){ctx.fillStyle='#f2a64b';ctx.font=FONT(24);ctx.fillText('（并列双料吃喝大王）',W/2,y+216);}
+  if(champs.length>1){ctx.fillStyle='#f2a64b';ctx.font=FONT(24);ctx.fillText('（并列'+(c.settings.trophyName||'冠军')+'）',W/2,y+216);}
   const ciw=(W-P*2-90)/2,cih=Math.round(ciw*0.75),ciy=y+222;
   (champ.dishes||[]).slice(0,2).forEach((d,i)=>{
     drawDish(dishImg[champ.id][i],grpEmoji(champ.id),d.name,P+30+i*(ciw+30),ciy,ciw,cih,26);
@@ -1453,7 +1457,7 @@ async function drawPoster(){
   ctx.strokeStyle='#f2a64b';ctx.lineWidth=2;ctx.setLineDash([8,8]);
   ctx.beginPath();ctx.moveTo(P,y);ctx.lineTo(W-P,y);ctx.stroke();ctx.setLineDash([]);
   ctx.fillStyle='#9a8672';ctx.font=SFONT(22);ctx.fillText('用心吃饭 · 用力生活 🍻',W/2,y+40);
-  ctx.fillStyle='#c9b8a3';ctx.font=SFONT(19);ctx.fillText('「吃喝大王」厨艺比赛 · 由评委品鉴系统生成',W/2,y+72);
+  ctx.fillStyle='#c9b8a3';ctx.font=SFONT(19);ctx.fillText('「'+(c.settings.eventName||'厨艺比赛')+'」· 由评委品鉴系统生成',W/2,y+72);
 
   let dataURL=null;
   try{dataURL=cv.toDataURL('image/jpeg',.92);}catch(e){console.warn('poster tainted',e);}
@@ -1678,6 +1682,7 @@ async function pageAdmin(){
     body=`<div class="card">
       <div class="corner"></div>
       <label class="lb">活动名称</label><input class="in" id="evName" value="${esc(s.eventName)}" maxlength="30">
+      <label class="lb">冠军称号</label><input class="in" id="evTrophy" value="${esc(s.trophyName||'')}" maxlength="16" placeholder="如：吃喝大王 / 厨神 / 冠军">
       <label class="lb">比赛时间</label><input class="in" id="evWhen" value="${esc(s.eventWhen||'')}" maxlength="30" placeholder="如：11 月 11 日 18:00–21:00">
       <label class="lb">比赛地点</label><input class="in" id="evWhere" value="${esc(s.eventWhere||'')}" maxlength="30" placeholder="如：××餐厅 · 三楼大堂">
       <label class="lb">评分维度与权重（合计不必为 100，按比例折算）</label>
@@ -1802,7 +1807,7 @@ async function pageAdmin(){
     <div class="card">
       <div class="rankcard ${r.rank===1?'r1':r.rank===2?'r2':r.rank===3?'r3':''}">
         <div class="badge">${r.rank}</div>
-        <div class="body"><div class="dish">${esc(r.name)}${r.rank===1&&r.avgTotal!==null?' · 吃喝大王':''}</div><div class="grp">${esc(r.members.join('、'))||'—'} · ${r.receivedTotal}/${r.expectedTotal} 份</div></div>
+        <div class="body"><div class="dish">${esc(r.name)}${r.rank===1&&r.avgTotal!==null?' · '+(S.config.settings.trophyName||'冠军'):''}</div><div class="grp">${esc(r.members.join('、'))||'—'} · ${r.receivedTotal}/${r.expectedTotal} 份</div></div>
         <div class="score"><div class="n">${r.avgTotal==null?'—':r.avgTotal}</div><div class="u">总分</div></div>
       </div>
       ${r.dishes.map(d=>`
@@ -2127,6 +2132,7 @@ document.addEventListener('click',async e=>{
     else if(act==='saveSettings'){
       const s=S.config.settings;
       const evName=($('#evName').value||'').trim()||'厨艺比赛';
+      const evTrophy=($('#evTrophy').value||'').trim()||'冠军';
       const evWhen=($('#evWhen').value||'').trim();
       const evWhere=($('#evWhere').value||'').trim();
       const dimRows=$$('#dimList .frow');
@@ -2149,6 +2155,7 @@ document.addEventListener('click',async e=>{
         S.scoresMap={};
       }
       s.eventName=evName;
+      s.trophyName=evTrophy;
       s.eventWhen=evWhen;s.eventWhere=evWhere;
       s.dims=nd.map((d,i)=>({key:'d'+i+'_'+Date.now().toString(36),name:d.name,weight:d.weight}));
       s.dropExtremes=drop;s.hideScoresDuringScoring=hide;
@@ -2229,7 +2236,7 @@ document.addEventListener('click',async e=>{
         await new Promise(r=>setTimeout(r,30));
         const blob=makeZip(files);
         const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');a.href=url;a.download='吃喝大王_照片备份_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.zip';
+        const a=document.createElement('a');a.href=url;a.download=((S.config.settings.eventName||'厨艺大赛').replace(/\s+/g,'_'))+'_照片备份_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.zip';
         document.body.appendChild(a);a.click();a.remove();
         setTimeout(()=>URL.revokeObjectURL(url),60000);
         toast('已打包 '+files.length+' 张照片（约 '+(blob.size/1024/1024).toFixed(1)+'MB）· 微信内没反应请用浏览器打开');
