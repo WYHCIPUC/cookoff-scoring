@@ -551,18 +551,19 @@ function defaultConfig(){
   return {
     v:3,phase:'setup',
     settings:{
-      eventName:'「吃喝大王」厨艺比赛',
+      eventName:'厨艺比赛',
       eventWhen:'',eventWhere:'',
       dims:[{key:'color',name:'色',weight:30},{key:'aroma',name:'香',weight:30},{key:'taste',name:'味',weight:40}],
       dropExtremes:true,hideScoresDuringScoring:true,
     },
     groups:defaultGroups(),
-    pinHash:pinHash('1011'),
+    pinHash:'',
   };
 }
 function demoConfig(){
   const c=defaultConfig();
   c.phase='scoring';
+  c.pinHash=pinHash('demo');
   c.settings.eventWhen='周六 18:00–21:00';c.settings.eventWhere='老地方 · 三楼大堂';
   c.groups=[
     {id:'g1',name:'干饭双人组',dishes:['蜜汁叉烧','上汤菜心'],members:['王大厨','阿芳'],judge:'王大厨'},
@@ -613,28 +614,42 @@ function fmtAgo(ts){
 }
 
 /* =============== 汇总计算 =============== */
-function computeResults(config,scoresMap){
-  const dims=config.settings.dims;
+const SCORE_MIN=1,SCORE_MAX=10;
+function isValidScore(v){return typeof v==='number'&&Number.isFinite(v)&&!Number.isNaN(v);}
+function validateScore(scores,dims){
+  const errors=[];let total=0;
   const wSum=dims.reduce((s,d)=>s+(+d.weight||0),0)||100;
+  for(const d of dims){
+    const v=scores&&scores[d.key];
+    if(!isValidScore(v)){errors.push(`${d.name||d.key} 不是有效数字`);continue;}
+    if(v<SCORE_MIN||v>SCORE_MAX){errors.push(`${d.name||d.key} 越界（${SCORE_MIN}–${SCORE_MAX}）`);continue;}
+    total+=v*(+d.weight||0);
+  }
+  return {ok:errors.length===0,errors,total:errors.length===0?+(total/wSum).toFixed(4):null};
+}
+function computeResults(config,scoresMap){
+  if(!config||!Array.isArray(config.groups))throw new TypeError('config.groups 必须是数组');
+  const dims=(config.settings&&Array.isArray(config.settings.dims))?config.settings.dims:[{key:'color',name:'色',weight:30},{key:'aroma',name:'香',weight:30},{key:'taste',name:'味',weight:40}];
+  const dropExtremes=!!(config.settings&&config.settings.dropExtremes);
+  const wSum=dims.reduce((s,d)=>s+(+d.weight||0),0)||100;
+  const nJudges=Math.max(config.groups.length-1,0);
   const rows=config.groups.map(g=>{
-    const nJudges=Math.max(config.groups.length-1,0);
     const dishes=g.dishes.map((dname,idx)=>{
       const byJudge=(scoresMap[g.id]||{})[idx]||{};
       const entries=Object.entries(byJudge).map(([jid,rec])=>{
+        if(jid===g.id)return null;
         const jg=config.groups.find(x=>x.id===jid);if(!jg)return null;
-        let total=0,ok=true;
-        for(const d of dims){const v=rec.scores&&rec.scores[d.key];if(typeof v!=='number'){ok=false;break;}total+=v*(+d.weight||0);}
-        if(!ok)return null;
-        return {jid,jname:jg.name,judgeName:jg.judge||'',total:+(total/wSum).toFixed(4),raw:rec.scores,comment:rec.comment||''};
+        const v=validateScore(rec.scores,dims);if(!v.ok)return null;
+        return {jid,jname:jg.name,judgeName:jg.judge||'',total:v.total,raw:rec.scores,comment:rec.comment||'',ts:rec.ts||0};
       }).filter(Boolean).sort((a,b)=>b.total-a.total);
       let used=entries,dropped=[];
-      if(config.settings.dropExtremes&&entries.length>=4){dropped=[entries[0],entries[entries.length-1]];used=entries.slice(1,-1);}
-      const avg=(arr,pick)=>arr.length?+(arr.reduce((s,e)=>s+pick(e),0)/arr.length).toFixed(2):null;
+      if(dropExtremes&&entries.length>=4){dropped=[entries[0],entries[entries.length-1]];used=entries.slice(1,-1);}
+      const avg=(arr,pick)=>arr&&arr.length?+(arr.reduce((s,e)=>s+pick(e),0)/arr.length).toFixed(2):null;
       return {
         idx,name:dname||'（未命名菜品）',
         expected:nJudges,received:entries.length,
         avgTotal:avg(used,e=>e.total),
-        dims:dims.map(d=>({name:d.name,avg:avg(used,e=>e.raw[d.key]||0)})),
+        dims:dims.map(d=>({name:d.name,key:d.key,avg:avg(used,e=>e.raw[d.key]||0)})),
         entries,dropped,
       };
     });
@@ -642,14 +657,21 @@ function computeResults(config,scoresMap){
     return {
       id:g.id,name:g.name,members:g.members,judge:g.judge,
       dishes,
-      expectedTotal:nJudges*g.dishes.length,
+      expectedTotal:nJudges*dishes.length,
       receivedTotal:dishes.reduce((s,d)=>s+d.received,0),
-      avgTotal:scored.length?+(scored.reduce((s,d)=>s+d.avgTotal,0)).toFixed(2):null,
+      avgTotal:scored.length?+(scored.reduce((s,d)=>s+d.avgTotal,0)/scored.length).toFixed(2):null,
     };
   });
-  rows.sort((a,b)=>(b.avgTotal==null?-1:b.avgTotal)-(a.avgTotal==null?-1:a.avgTotal));
+  rows.sort((a,b)=>{
+    const aScore=a.avgTotal==null?-Infinity:a.avgTotal;
+    const bScore=b.avgTotal==null?-Infinity:b.avgTotal;
+    return bScore-aScore;
+  });
   let lastScore=null,lastRank=0;
-  rows.forEach((r,i)=>{r.rank=(r.avgTotal!==null&&r.avgTotal===lastScore)?lastRank:i+1;if(r.avgTotal!==null){lastScore=r.avgTotal;lastRank=r.rank;}});
+  rows.forEach((r,i)=>{
+    if(r.avgTotal!==null&&r.avgTotal===lastScore)r.rank=lastRank;
+    else{r.rank=i+1;if(r.avgTotal!==null){lastScore=r.avgTotal;lastRank=r.rank;}}
+  });
   return rows;
 }
 
@@ -690,44 +712,73 @@ const TcbAdapter={mode:'cloud',label:'云端同步',db:null,ready:false,
   async init(envId){
     if(typeof cloudbase==='undefined')throw new Error('SDK 加载失败（请检查网络）');
     const app=cloudbase.init({env:envId});
-    this.auth=app.auth({persistence:'local'});
+    this.app=app;this.auth=app.auth({persistence:'local'});
     let ok=false;
     try{const r=await this.auth.getSession();ok=!!(r&&r.data&&r.data.session);}catch(e){
       try{ok=!!(await this.auth.getLoginState());}catch(e2){ok=false;}
     }
     if(!ok){const r=await this.auth.signInAnonymously();
       if(r&&r.error)throw new Error('匿名登录失败：'+(r.error.message||''));}
-    this.app=app;this.db=app.database();this.ready=true;
+    this.db=app.database();this.ready=true;
+  },
+  async callFn(name,data){
+    if(!this.app)throw new Error('SDK 未初始化');
+    const r=await this.app.callFunction({name,data});
+    const res=(r&&r.result)||{};
+    if(res.code!==0&&res.code!==undefined)throw new Error(res.message||`云函数 ${name} 返回错误`);
+    return res.data;
+  },
+  async signInWithTicket(ticket){
+    if(!this.auth)throw new Error('SDK 未初始化');
+    this.auth.setCustomSignFunc(()=>Promise.resolve(ticket));
+    const r=await this.auth.signInWithCustomTicket();
+    if(r&&r.error)throw new Error('ticket 登录失败：'+(r.error.message||''));
   },
   async loadAll(){
-    const [cfgRes,scoRes,phoRes]=await Promise.all([
-      this.db.collection('cc_config').doc('app').get().catch(()=>({data:null})),
-      this.db.collection('cc_scores').limit(300).get().catch(()=>({data:[]})),
-      this.db.collection('cc_photos').field({_id:true,gid:true,caption:true,ts:true}).orderBy('ts','desc').limit(200).get().catch(()=>({data:[]})),
-    ]);
+    const cfgRes=await this.db.collection('cc_config').doc('app').get().catch(()=>({data:null}));
     let config=cfgRes&&cfgRes.data||null;
-    if(Array.isArray(config))config=config[0]||null;   // 部分版本 doc().get() 返回数组
+    if(Array.isArray(config))config=config[0]||null;
+
+    // 分页拉取评分
     const scoresMap={};
-    for(const d of (scoRes&&scoRes.data||[])){
-      if(!d||!d.judge||!d.target)continue;
-      const t=scoresMap[d.target]=scoresMap[d.target]||{};
-      const i=t[d.idx||0]=t[d.idx||0]||{};
-      i[d.judge]={scores:d.scores||{},comment:d.comment||'',ts:d.ts||0};
+    const pageSize=100;
+    let skip=0,hasMore=true;
+    while(hasMore){
+      const res=await this.db.collection('cc_scores').limit(pageSize).skip(skip).get().catch(()=>({data:[]}));
+      const docs=(res&&res.data)||[];
+      for(const d of docs){
+        if(!d||!d.judge||!d.target)continue;
+        const t=scoresMap[d.target]=scoresMap[d.target]||{};
+        const i=t[d.idx||0]=t[d.idx||0]||{};
+        i[d.judge]={scores:d.scores||{},comment:d.comment||'',ts:d.ts||0};
+      }
+      hasMore=docs.length===pageSize;
+      skip+=pageSize;
     }
+
+    // 云端模式下，配置由 admin-login/setup 首次创建；未创建时本地回退到默认配置
     if(!config||!config.groups){
-      if(!this._ensured){this._ensured=true;config=defaultConfig();await this.saveConfig(config);}
-      else config=defaultConfig();
+      this._ensured=true;
+      config=defaultConfig();
     }
-    const dimsBefore=JSON.stringify(config.settings&&config.settings.dims);
     const norm=normalizeConfig(config);
-    if(dimsBefore&&JSON.stringify(norm.settings.dims)!==dimsBefore)await this.saveConfig(norm); // 维度迁移写回
+
+    // 分页拉取照片元数据
     const photos=[];
-    for(const d of (phoRes&&phoRes.data||[])){if(d)photos.push({id:d._id,gid:d.gid||'misc',caption:d.caption||'',ts:d.ts||0});}
+    skip=0;hasMore=true;
+    while(hasMore){
+      const res=await this.db.collection('cc_photos').field({_id:true,gid:true,caption:true,ts:true}).orderBy('ts','desc').limit(pageSize).skip(skip).get().catch(()=>({data:[]}));
+      const docs=(res&&res.data)||[];
+      for(const d of docs){if(d)photos.push({id:d._id,gid:d.gid||'misc',caption:d.caption||'',ts:d.ts||0});}
+      hasMore=docs.length===pageSize;
+      skip+=pageSize;
+    }
+
     return {config:norm,scoresMap,photos};
   },
   async uploadPhoto(blob,gid,caption){
     const dataURL=await blobToDataURL(blob);
-    const r=await this.db.collection('cc_photos').add({gid:gid||'misc',caption:caption||'',dataURL,ts:Date.now()});
+    const r=await this.callFn('upload-photo',{gid:gid||'misc',caption:caption||'',dataURL});
     this._pd=null;this._pdAt=0;   // 上传后立即失效缓存
     return r;
   },
@@ -753,7 +804,7 @@ const TcbAdapter={mode:'cloud',label:'云端同步',db:null,ready:false,
   },
   async uploadDishPhoto(gid,idx,blob){
     const dataURL=await blobToDataURL(blob);
-    await this.db.collection('cc_dishphotos').doc(gid+'_'+idx).set({gid,idx,dataURL});
+    await this.callFn('upload-dish-photo',{gid,idx,dataURL});
     this._dp=null;this._dpAt=0;
     return dataURL;
   },
@@ -764,12 +815,35 @@ const TcbAdapter={mode:'cloud',label:'云端同步',db:null,ready:false,
     return out;   // 云端照片已改为 base64 直存数据库，不再需要临时链接
   },
   async saveConfig(cfg){
-    const clean=JSON.parse(JSON.stringify(cfg,(k,v)=>k.startsWith('_')?undefined:v));  // 剥离 _id 等元数据
-    await this.db.collection('cc_config').doc('app').set(clean);
+    // 管理员更新配置统一走云函数，防止客户端越权写 cc_config
+    await this.callFn('admin-update-config',{config:cfg});
   },
-  async saveScore(j,t,idx,rec){await this.db.collection('cc_scores').doc(j+'__'+t+'__'+idx)
-    .set({judge:j,target:t,idx,scores:rec.scores,comment:rec.comment,ts:rec.ts});},
+  async saveScore(j,t,idx,rec){
+    // 评分提交走云函数，服务端校验身份/阶段/回避/分值
+    await this.callFn('submit-score',{target:t,idx,scores:rec.scores,comment:rec.comment});
+  },
+  async adminSetPhase(phase){await this.callFn('admin-set-phase',{phase});},
+  async adminClearScores(){await this.callFn('admin-clear-scores',{});},
+  async adminResetAll(){await this.callFn('admin-reset-all',{});},
+  async adminImportGroups(groups){await this.callFn('admin-import-groups',{groups});},
+  async adminExport(){return await this.callFn('admin-export',{});},
 };
+
+/* =============== 云函数鉴权辅助 =============== */
+async function adminLoginCloud(pin,setup){
+  if(S.adapter.mode!=='cloud')throw new Error('仅云端模式需要登录');
+  const data=await S.adapter.callFn('admin-login',{pin,setup});
+  if(!data||!data.ticket)throw new Error('登录失败，未返回 ticket');
+  await S.adapter.signInWithTicket(data.ticket);
+  return data;
+}
+async function registerJudgeCloud(groupId){
+  if(S.adapter.mode!=='cloud')return;
+  const data=await S.adapter.callFn('register-judge',{groupId});
+  if(!data||!data.ticket)throw new Error('评委登记失败');
+  await S.adapter.signInWithTicket(data.ticket);
+  return data;
+}
 
 /* =============== 滚动位置记录（轮询重渲染保持用） =============== */
 window.addEventListener('scroll',()=>{pageBoard._sy=window.scrollY;pageMoments._sy=window.scrollY;},{passive:true});
@@ -1528,14 +1602,15 @@ document.addEventListener('input',e=>{
 
 /* ---------- 主持人：登录 ---------- */
 function pageAdminLogin(){
+  const setup=!S.config||!S.config.pinHash;
   $('#app').innerHTML=topbar('主持人入口')+
   `<div class="page">
     <div class="card plain" style="max-width:360px;margin:40px auto;padding:28px 22px;text-align:center">
       <div class="seal" style="margin:0 auto 14px">主</div>
-      <div class="h2" style="margin-top:0">请输入主持人口令</div>
-      <div class="hint">默认口令 1011，可在后台修改</div>
+      <div class="h2" style="margin-top:0">${setup?'首次使用 · 设置主持人口令':'请输入主持人口令'}</div>
+      <div class="hint" id="pinHint">${setup?'设置 4–6 位数字口令，之后用它登录后台':'输入后台口令'}</div>
       <input class="in" id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="口令" style="text-align:center;font-size:1.2rem;letter-spacing:.4em;font-family:var(--num)">
-      <button class="btn primary block mt" data-act="adminLogin">进入后台</button>
+      <button class="btn primary block mt" data-act="adminLogin">${setup?'设置并进入后台':'进入后台'}</button>
     </div>
   </div>`;
   const inp=$('#pin');inp.focus();
@@ -1660,7 +1735,7 @@ async function pageAdmin(){
     const dishFilled=c.groups.reduce((s,g)=>s+g.dishes.filter(Boolean).length,0);
     const dishTotal=c.groups.reduce((s,g)=>s+g.dishes.length,0);
     const noJudge=c.groups.filter(g=>!g.judge);
-    const isDefaultPin=c.pinHash===pinHash('1011');
+    const isDefaultPin=!c.pinHash||c.pinHash===pinHash('demo');
     const ready=!noDish.length&&!noJudge.length&&dishFilled>=dishTotal&&!isDefaultPin;
     body=`<div class="card">
       <div class="corner"></div>
@@ -1668,7 +1743,7 @@ async function pageAdmin(){
       <div class="jrow"><span class="jn">👥 队伍与评委</span><span class="jd" style="flex:1;text-align:left;padding-left:8px">${noJudge.length?'第 '+noJudge.map(g=>esc(g.name)).join('、')+' 组未指定评委':'全部就绪'}</span><span class="ok">${noJudge.length?'':'✅'}</span></div>
       <div class="jrow"><span class="jn">📝 菜名</span><span class="jd" style="flex:1;text-align:left;padding-left:8px">${dishFilled}/${dishTotal} 已填</span><span class="ok">${dishFilled>=dishTotal?'✅':''}</span></div>
       <div class="jrow"><span class="jn">📷 菜品靓照</span><span class="jd" style="flex:1;text-align:left;padding-left:8px">可选，赛后海报更精彩</span><span class="ok"></span></div>
-      <div class="jrow"><span class="jn">🔑 口令</span><span class="jd" style="flex:1;text-align:left;padding-left:8px">${isDefaultPin?'仍是默认口令 1011，建议修改':'已自定义 ✅'}</span><span class="ok">${isDefaultPin?'':'✅'}</span></div>
+      <div class="jrow"><span class="jn">🔑 口令</span><span class="jd" style="flex:1;text-align:left;padding-left:8px">${isDefaultPin?'尚未设置安全口令，请尽快设置':'已自定义 ✅'}</span><span class="ok">${isDefaultPin?'':'✅'}</span></div>
       <div style="display:flex;gap:10px;margin-top:12px">
         <a class="btn sm ghost" style="flex:1;text-decoration:none" href="#/serving">去补菜名 / 拍靓照</a>
         <a class="btn sm ghost" style="flex:1;text-decoration:none" href="#/admin" onclick="S.adminTab='settings';setTimeout(pageAdmin,50)">修改口令</a>
@@ -1684,6 +1759,12 @@ async function pageAdmin(){
         <div class="mt"><button class="btn ghost" data-act="resetScores">↺ 清空全部评分、重新开吃</button></div>`:''}
       ${ph==='finished'?`<button class="btn primary" data-act="setPhase" data-ph="scoring">↺ 重新开启评分</button>
         <div class="mt"><button class="btn ghost" data-act="setPhase" data-ph="setup">返回配置阶段</button></div>`:''}
+    </div>
+    <div class="card">
+      <div class="corner"></div>
+      <div class="h2" style="margin-top:0">📦 数据导出</div>
+      <div class="hint">导出当前配置与全部评分 JSON，可用于赛前快照或赛后备份。</div>
+      <button class="btn ghost block" data-act="exportData">⬇️ 导出配置与评分</button>
     </div>
     <div class="card">
       <div class="corner"></div>
@@ -1880,7 +1961,16 @@ document.addEventListener('click',async e=>{
   const act=el.dataset.act;
   try{
     if(act==='go'){location.hash=el.dataset.to;}
-    else if(act==='pickGroup'){S.myGroup=el.dataset.gid;localStorage.setItem('cc_mygroup',S.myGroup);S.draft={};location.hash='#/judge-main';}
+    else if(act==='pickGroup'){
+      const gid=el.dataset.gid;
+      if(S.adapter.mode==='demo'){S.myGroup=gid;localStorage.setItem('cc_mygroup',gid);S.draft={};location.hash='#/judge-main';}
+      else{
+        el.style.opacity='0.5';
+        try{await registerJudgeCloud(gid);S.myGroup=gid;localStorage.setItem('cc_mygroup',gid);S.draft={};location.hash='#/judge-main';}
+        catch(e){toast(e.message||'登记失败');}
+        finally{el.style.opacity='';}
+      }
+    }
     else if(act==='switchGroup'){S.myGroup='';localStorage.removeItem('cc_mygroup');S.draft={};location.hash='#/judge';}
     else if(act==='pick'){
       const {dim,v}=el.dataset;
@@ -1942,11 +2032,10 @@ document.addEventListener('click',async e=>{
       if(cnt>0&&!(await confirmDlg('导入将替换全部队伍','已有 '+cnt+' 条评分会一并作废。确定导入吗？','替换并导入')))return;
       const old=S.config.groups;
       const groups=teams.map((t,i)=>({id:(old[i]&&old[i].id)||'g'+(i+1)+'_'+Date.now().toString(36).slice(-3),name:t.name||('第'+(i+1)+'组'),members:t.members,dishes:t.dishes,judge:t.members[0]||'',cuisine:'',dishPhotos:[]}));
-      S.config.groups=groups;
-      S.scoresMap={};
-      await S.adapter.saveConfig(S.config);
       if(S.adapter.mode==='cloud'){
-        try{const all=await S.adapter.db.collection('cc_scores').limit(300).get();for(const d of (all.data||[]))await S.adapter.db.collection('cc_scores').doc(d._id||d.id).remove();}catch(e){}
+        await S.adapter.adminImportGroups(groups);
+      }else{
+        S.config.groups=groups;S.scoresMap={};await S.adapter.saveConfig(S.config);
       }
       await loadAll();pageAdmin();
       toast('已导入 '+groups.length+' 组 ✅');
@@ -1987,8 +2076,18 @@ document.addEventListener('click',async e=>{
     }
     else if(act==='adminLogin'){
       const p=$('#pin').value.trim();
-      if(pinHash(p)===S.config.pinHash){S.adminOk=true;pageAdmin();}
-      else toast('口令不对哦');
+      if(S.adapter.mode==='demo'){
+        if(pinHash(p)===S.config.pinHash){S.adminOk=true;pageAdmin();}
+        else toast('口令不对哦');
+      }else{
+        const btn=$('[data-act="adminLogin"]');btn.disabled=true;btn.textContent='校验中…';
+        try{
+          const setup=!S.config.pinHash;
+          await adminLoginCloud(p,setup);
+          S.adminOk=true;pageAdmin();
+        }catch(e){toast(e.message||'登录失败');}
+        finally{btn.disabled=false;btn.textContent='进入后台';}
+      }
     }
     else if(act==='adminTab'){S.adminTab=el.dataset.tab;pageAdmin();}
     else if(act==='saveGroup'){
@@ -2066,30 +2165,41 @@ document.addEventListener('click',async e=>{
         if(noDish||noJudge)extra='注意：'+(noDish?noDish+' 组没填菜名 ':'')+(noJudge?noJudge+' 组没指定评委代表 ':'')+'（可先开始，现场再补）';
       }
       if(!(await confirmDlg(label+'？',(ph==='finished'?'结束后评委不能再修改评分（可重新开启）。':'')+extra,label)))return;
-      S.config.phase=ph;await S.adapter.saveConfig(S.config);await loadAll();pageAdmin();toast(label+' ✔');
+      if(S.adapter.mode==='cloud'){await S.adapter.adminSetPhase(ph);}
+      else{S.config.phase=ph;await S.adapter.saveConfig(S.config);}
+      await loadAll();pageAdmin();toast(label+' ✔');
       if(ph==='finished')sessionStorage.removeItem('cc_revealed');
     }
     else if(act==='resetScores'){
       const pw5=await promptDlg('清空全部评分？','所有评委已提交的分数将被删除，比赛回到评分开始状态。');
       if(pw5===null)return;
       if(pinHash(pw5)!==S.config.pinHash){toast('口令不对');return;}
-      if(S.adapter.mode==='cloud'){
-        const all=await S.adapter.db.collection('cc_scores').limit(300).get();
-        for(const d of (all.data||[]))await S.adapter.db.collection('cc_scores').doc(d._id).remove();
-      }
-      S.scoresMap={};S.draft={};S.config.phase='scoring';
-      await S.adapter.saveConfig(S.config);await loadAll();pageAdmin();toast('评分已清空');
+      if(S.adapter.mode==='cloud'){await S.adapter.adminClearScores();}
+      else{S.scoresMap={};S.draft={};S.config.phase='scoring';await S.adapter.saveConfig(S.config);}
+      await loadAll();pageAdmin();toast('评分已清空');
     }
     else if(act==='resetAll'){
       const pw6=await promptDlg('清空一切？','队伍、菜品、评分、设置将全部恢复默认，不可恢复。');
       if(pw6===null)return;
       if(pinHash(pw6)!==S.config.pinHash){toast('口令不对');return;}
-      if(S.adapter.mode==='cloud'){
-        const all=await S.adapter.db.collection('cc_scores').limit(300).get();
-        for(const d of (all.data||[]))await S.adapter.db.collection('cc_scores').doc(d._id).remove();
-      }
-      S.config=defaultConfig();S.scoresMap={};S.draft={};
-      await S.adapter.saveConfig(S.config);await loadAll();pageAdmin();toast('已恢复默认');
+      if(S.adapter.mode==='cloud'){await S.adapter.adminResetAll();}
+      else{S.config=defaultConfig();S.scoresMap={};S.draft={};await S.adapter.saveConfig(S.config);}
+      await loadAll();pageAdmin();toast('已恢复默认');
+    }
+    else if(act==='exportData'){
+      if(el.dataset.busy)return;
+      el.dataset.busy='1';const oldTxt=el.textContent;el.textContent='⬇️ 正在导出…';
+      try{
+        if(S.adapter.mode!=='cloud'){toast('演示模式无云端数据，无需导出');return;}
+        const data=await S.adapter.adminExport();
+        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');a.href=url;a.download='cookoff_backup_'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'.json';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+        toast('已导出配置与评分');
+      }catch(e){toast('导出失败：'+(e.message||e));}
+      finally{el.textContent=oldTxt;delete el.dataset.busy;}
     }
     else if(act==='zipPhotos'){
       if(el.dataset.busy)return;

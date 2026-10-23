@@ -1,0 +1,1 @@
+{"name":"submit-score","version":"1.0.0","description":"评委提交/更新评分","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.8.0"}}

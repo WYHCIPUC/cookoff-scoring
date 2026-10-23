@@ -1,0 +1,1 @@
+{"name":"upload-dish-photo","version":"1.0.0","description":"上传菜品靓照","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.8.0"}}

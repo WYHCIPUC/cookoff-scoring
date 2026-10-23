@@ -1,0 +1,1 @@
+{"name":"admin-reset-all","version":"1.0.0","description":"主持人清空全部数据恢复默认","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.8.0"}}

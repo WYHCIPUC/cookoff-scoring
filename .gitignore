@@ -6,3 +6,10 @@ ghlogin.log
 server.log
 .mimosa/
 .workbuddy/
+.env
+.env.*
+!.env.example
+tcb_custom_login.json
+cloudfunctions/**/tcb_custom_login.json
+.DS_Store
+

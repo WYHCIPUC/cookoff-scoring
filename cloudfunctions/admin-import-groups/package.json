@@ -1,0 +1,1 @@
+{"name":"admin-import-groups","version":"1.0.0","description":"主持人批量导入组并清空旧评分","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.8.0"}}

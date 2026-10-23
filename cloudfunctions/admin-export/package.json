@@ -1,0 +1,1 @@
+{"name":"admin-export","version":"1.0.0","description":"导出比赛配置与评分（赛前快照/赛后备份）","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.8.0"}}

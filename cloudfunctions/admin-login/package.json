@@ -1,0 +1,9 @@
+{
+  "name": "admin-login",
+  "version": "1.0.0",
+  "description": "管理员登录 / 首次设置口令",
+  "main": "index.js",
+  "dependencies": {
+    "@cloudbase/node-sdk": "^2.8.0"
+  }
+}

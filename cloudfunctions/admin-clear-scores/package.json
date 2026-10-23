@@ -1,0 +1,1 @@
+{"name":"admin-clear-scores","version":"1.0.0","description":"主持人清空全部评分","main":"index.js","dependencies":{"@cloudbase/node-sdk":"^2.8.0"}}

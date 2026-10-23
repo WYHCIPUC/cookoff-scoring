@@ -1,0 +1,26 @@
+{
+  "name": "cookoff-scoring",
+  "version": "1.0.0",
+  "description": "厨艺比赛评委打分工具：可信后端鉴权、实时汇总、去极值、榜单海报",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build-dist.mjs",
+    "build:env": "node scripts/build-dist.mjs ${TCB_ENV_ID}",
+    "setup:cloud": "node scripts/setup-cloud.mjs",
+    "lint": "node scripts/lint.mjs",
+    "preview": "node scripts/preview.mjs"
+  },
+  "keywords": [
+    "cookoff",
+    "scoring",
+    "cloudbase",
+    "cooking-competition"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}
