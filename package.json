@@ -1,6 +1,6 @@
 {
   "name": "cookoff-scoring",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "厨艺比赛评委打分工具：可信后端鉴权、实时汇总、去极值、榜单海报",
   "type": "module",
   "scripts": {

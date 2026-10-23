@@ -3,7 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>「吃喝大王」厨艺比赛 · 评委品鉴系统</title>
+<title>厨艺比赛 · 评委品鉴系统</title>
+<script>
+// ============================
+// 落地页配置：改成你自己的活动信息
+// ============================
+const LANDING = {
+  eventName: '〈活动名称〉',                 // 活动名称，会填充到标题和大标题
+  dateLine: '时间 · 地点 见打分工具首页',    // 示例：2026 年 11 月 11 日 18:00 · ××餐厅三楼
+  groupCount: 'N',                          // 组数，如 8
+  membersPerGroup: '2–3',                   // 每组人数
+  dishesPerGroup: 2,                        // 每组队出品菜数
+  trophyName: '〈冠军称号〉',                // 冠军称号，如「吃喝大王」
+  appUrl: './index.html',                   // 打分系统入口（部署后可改成绝对链接）
+  repoUrl: 'https://github.com/WYHCIPUC/cookoff-scoring'
+};
+</script>
 <style>
 :root{
   --paper:#f6efe2; --card:#fffdf7; --ink:#3d3226; --ink2:#95836d;
@@ -115,9 +130,9 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
   <div class="stamp"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="24" cy="24" r="20" stroke-dasharray="3 4"/><circle cx="24" cy="24" r="15.5"/></svg><span>品鉴</span></div>
   <div class="kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 3l3 18M13 3l-1 18"/><path d="M7.5 8l5-1"/></svg>开饭啦 · 干饭人集合</div>
   <svg class="crown" viewBox="0 0 24 24" fill="none" stroke="#f4e7c8" stroke-width="1.6" stroke-linejoin="round"><path d="M4 18h16l-1-9-5 4-4-7-4 7-5-4z"/></svg>
-  <h1>「吃喝大王」厨艺比赛</h1>
+  <h1 id="heroTitle">「〈活动名称〉」厨艺比赛</h1>
   <div class="sub">评委品鉴打分系统 · 手机扫码即用 · 无需安装</div>
-  <div class="date">时间 · 地点 见打分工具首页</div>
+  <div class="date" id="heroDate">时间 · 地点 见打分工具首页</div>
 </div>
 
 <div class="wrap">
@@ -131,7 +146,7 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
       </div>
       <div class="step">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5"/><circle cx="12" cy="15" r="3"/></svg></div>
-        <b>② 选我的组</b><p>7 组真实名单<br>本组菜品自动回避</p>
+        <b>② 选我的组</b><p>选择本组<br>本组菜品自动回避</p>
       </div>
       <div class="step">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16a8 8 0 0 1-16 0z"/><path d="M9 8c0-1.5 1.5-1.5 1.5-3M13 8c0-1.5 1.5-1.5 1.5-3"/></svg></div>
@@ -139,7 +154,7 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
       </div>
       <div class="step">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 18h16l-1-9-5 4-4-7-4 7-5-4z"/></svg></div>
-        <b>④ 揭晓大王</b><p>逐组揭晓彩带雨<br>生成海报发群里</p>
+        <b>④ 揭晓冠军</b><p>逐组揭晓彩带雨<br>生成海报发群里</p>
       </div>
     </div>
   </div>
@@ -153,7 +168,7 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
       </div>
       <div class="feat">
         <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.6-3.5 2.8-5.5 5.5-5.5s4.9 2 5.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M14.8 14.8c2.4.2 4.6 1.9 5.2 5.2"/></svg></div>
-        <div><b>多人实时共享</b><p>评委同时打分互不冲突，主持人后台 6 秒刷新全场</p></div>
+        <div><b>多人实时共享</b><p>评委同时打分互不冲突，主持人后台定时刷新全场</p></div>
       </div>
       <div class="feat">
         <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg></div>
@@ -176,10 +191,10 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
 
   <div class="sec">比赛规则</div>
   <div class="card">
-    <div class="rule"><div class="rn">组</div><div><b>8 组 × 2 人，各出 2 道菜</b><p>菜单赛前保密，组间互评、本组回避</p></div></div>
+    <div class="rule"><div class="rn">组</div><div id="ruleGroup"><b>〈N〉组 × 〈每组人数〉人，各出 2 道菜</b><p>菜单赛前保密，组间互评、本组回避</p></div></div>
     <div class="rule"><div class="rn">评</div><div><b>每组推举 1 位评委</b><p>匿名打分，色 30% · 香 30% · 味 40%，每项 1–10 分</p></div></div>
     <div class="rule"><div class="rn">均</div><div><b>自动去极值</b><p>每道菜去掉一个最高分和一个最低分再平均</p></div></div>
-    <div class="rule"><div class="rn">王</div><div><b>小组总分 = 两道菜之和</b><p>满分 20，最高者荣膺「吃喝大王」称号 👑</p></div></div>
+    <div class="rule"><div class="rn">王</div><div id="ruleKing"><b>小组总分 = 各菜得分之和</b><p>最高者荣膺「〈冠军称号〉」称号 👑</p></div></div>
   </div>
 
   <div class="sec">扫码上桌</div>
@@ -192,10 +207,10 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
       </div>
       <div>
         <div style="font-family:var(--serif);font-size:18px;font-weight:800;margin-bottom:6px">现在就进去看看</div>
-        <p style="font-size:13.5px;color:var(--ink2);line-height:1.7">演示数据已就位：7 组队伍、14 道菜、84 份评分，<br>可以完整体验打分 → 揭晓 → 海报全流程。</p>
+        <p style="font-size:13.5px;color:var(--ink2);line-height:1.7">主持人配置好活动后，<br>即可完整体验打分 → 揭晓 → 海报全流程。</p>
         <div class="btns" style="justify-content:flex-start">
-          <a class="btn primary" href="https://cooktool2026-d7gyuz92r0462a11c-1259386436.tcloudbaseapp.com/" target="_blank" rel="noopener">进入打分系统</a>
-          <a class="btn ghost" href="https://github.com/WYHCIPUC/cookoff-scoring" target="_blank" rel="noopener">GitHub 仓库</a>
+          <a class="btn primary" id="appBtn" href="./index.html" rel="noopener">进入打分系统</a>
+          <a class="btn ghost" id="repoBtn" href="https://github.com/WYHCIPUC/cookoff-scoring" target="_blank" rel="noopener">GitHub 仓库</a>
         </div>
       </div>
     </div>
@@ -204,11 +219,51 @@ footer .seal2{display:inline-flex;width:40px;height:40px;color:var(--red);vertic
   <footer>
     <div class="seal2"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="24" cy="24" r="20" stroke-dasharray="3 4"/><circle cx="24" cy="24" r="15.5"/></svg></div>
     <div>用心吃饭 · 用力生活</div>
-    <div style="margin-top:4px">「吃喝大王」厨艺比赛 · 评委品鉴系统</div>
+    <div style="margin-top:4px" id="footerEvent">「〈活动名称〉」厨艺比赛 · 评委品鉴系统</div>
   </footer>
 
 </div>
 </div>
+
+<script>
+(function(){
+  function fill(){
+    const en = (LANDING && LANDING.eventName) || '〈活动名称〉';
+    const trophy = (LANDING && LANDING.trophyName) || '〈冠军称号〉';
+    const groups = (LANDING && LANDING.groupCount) || 'N';
+    const members = (LANDING && LANDING.membersPerGroup) || '2–3';
+    const dishes = (LANDING && LANDING.dishesPerGroup) || 2;
+    const dateLine = (LANDING && LANDING.dateLine) || '时间 · 地点 见打分工具首页';
+    const appUrl = (LANDING && LANDING.appUrl) || './index.html';
+    const repoUrl = (LANDING && LANDING.repoUrl) || 'https://github.com/WYHCIPUC/cookoff-scoring';
+
+    document.title = en + '厨艺比赛 · 评委品鉴系统';
+    const h1 = document.getElementById('heroTitle');
+    if (h1) h1.textContent = '「' + en + '」厨艺比赛';
+    const dateEl = document.getElementById('heroDate');
+    if (dateEl) dateEl.textContent = dateLine;
+
+    const ruleGroup = document.getElementById('ruleGroup');
+    if (ruleGroup) ruleGroup.innerHTML = '<b>' + groups + ' 组 × ' + members + ' 人，各出 ' + dishes + ' 道菜</b><p>菜单赛前保密，组间互评、本组回避</p>';
+
+    const ruleKing = document.getElementById('ruleKing');
+    if (ruleKing) ruleKing.innerHTML = '<b>小组总分 = 各菜得分之和</b><p>最高者荣膺「' + trophy + '」称号 👑</p>';
+
+    const appBtn = document.getElementById('appBtn');
+    if (appBtn) appBtn.href = appUrl;
+    const repoBtn = document.getElementById('repoBtn');
+    if (repoBtn) repoBtn.href = repoUrl;
+
+    const footer = document.getElementById('footerEvent');
+    if (footer) footer.textContent = '「' + en + '」厨艺比赛 · 评委品鉴系统';
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', fill);
+  } else {
+    fill();
+  }
+})();
+</script>
 
 </body>
 </html>

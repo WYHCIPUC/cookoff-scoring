@@ -123,7 +123,7 @@ cloudfunctions/          # 可信后端云函数
   upload-dish-photo/     # 上传菜品靓照
 public/
   index.html             # 单文件前端（正式版 + 演示模式）
-  landing.html           # 介绍页
+  landing.html           # 介绍页（顶部 LANDING 对象可自定义活动名称/时间地点/入口等）
   qr.png                 # 示例二维码
 scripts/
   build-dist.mjs         # 把 envId 注入 dist/index.html
